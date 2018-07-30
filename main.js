@@ -46,31 +46,23 @@ d3.json("data.json").then(function(data){
 				player1 = new Object();
 				player1.id = data[i].player.id;
 				player1.name = data[i].player.name
-				players.push(player1);
-				//players.push(data[i].player.id)
-				 //players.push(data[i].player.name)
-
-				 console.log('a')
+				players.push(player1);	
+				 
 			}
+			var found = false
 			//iterate to find similarities
-			for(var j = 0; j < players.length; j++){
-				// com = new String(players[j].id);
-				if(players[j].id != data[i].player.id){
-					player1 = new Object();
-					player1.id = data[i].player.id;
-					player1.name = data[i].player.name
-					players.push(player1);
-					//players.push(data[i].player.id)
-					// players.push(data[i].player.name)
-					 // p.init(data[i].player.id, data[i].player.name)
-					 // players.push(p)
-					// console.log(players.length)
-					 console.log(players.length)
-					 break
-					
+			for(var j = 0; j < players.length && !found; j++){
+				
+				if(data[i].player.id == players[j].id ){
+					found = true
 				}
-
-
+			}
+			//if not found -> add to the array
+			if(found == false){
+				player1 = new Object();
+				player1.id = data[i].player.id;
+				player1.name = data[i].player.name
+				players.push(player1);
 			}
 			
 			
@@ -81,7 +73,9 @@ d3.json("data.json").then(function(data){
 	//player id iteration
 	console.log(players.length)
 	for(var i=0; i<players.length; i++){
-		 document.write(players[i].id+ "<br>")
+		 document.write(players[i].id + "<br>")
+		 document.write(players[i].name  +"<br>")
+
 		 //console.log(players[i].name)
 	}
 
