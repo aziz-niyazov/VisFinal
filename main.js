@@ -23,6 +23,7 @@
 // 	}
 // }
 
+// arrays of 2 of players
 var players = [[],[]]
 
 
@@ -50,18 +51,19 @@ d3.json("lineups_7298.json").then(function(lineups){
 			p.team_name = lineups[i].team_name
 
 			p.events = new Array()
+			
+			p.links  = new Object()
+			p.links.npasses = 0
+			p.links.goals = 0
+			p.links.blocked = 0
+
+
 			if(i==0){
 				players[0].push(p)
 			}else if(i==1){
 				players[1].push(p)	
 			}
-			
 		}
-
-		
-		
-
-
 	}
 	
 
@@ -126,7 +128,6 @@ d3.json("data.json").then(function(data){
 			for(var j = 0; j < players[0].length ; j++){
 				//if(players[0][j].id == data[i].player.id){
 					//console.log("json " + data[i].timestamp)
-
 					event = new Object()
 					
 					//add type
@@ -169,6 +170,7 @@ d3.json("data.json").then(function(data){
 					//add pass
 					if(data[i].hasOwnProperty('pass')){
 						pass = new Object()
+						//check for recepient
 						if(data[i].pass.hasOwnProperty('recipient')){
 							pass.recipient = new Object()
 							pass.recipient.id = data[i].pass.recipient.id
@@ -179,9 +181,10 @@ d3.json("data.json").then(function(data){
 						pass.height = data[i].pass.height
 						pass.end_location = data[i].pass.end_location
 						event.pass = pass
+
+						
 					}
 					
-
 					//add the rest
 					event.id = data[i].id
 					event.index = data[i].index
@@ -191,10 +194,6 @@ d3.json("data.json").then(function(data){
 					event.second = data[i].second
 					event.possession = data[i].possession
 					event.duration  =data[i].duration
-					
-
-
-
 					//players[0][j].events.push(event)
 					//console.dir(players[0][j])
 					//console.log(players[0][j].id + " " + data[i].player.id)
@@ -209,13 +208,48 @@ d3.json("data.json").then(function(data){
 					
 				//}
 			}
-			
 
+			
+			for(var k = 0; k < players[0].length; k++){
+				for(l = 0; l < 2; l++){
+					//add number of passes
+					if(players[0][k].id == data[i].player.id){
+						if(data[i].hasOwnProperty("pass")){
+							 if(data[i].pass.hasOwnProperty("outcome")){
+								if(data[i].pass.outcome.name != 'Incomplete'){
+									players[0][k].links.npasses++
+								}
+							 }
+						}
+						if(data[i].hasOwnProperty("shot")){
+							 if(data[i].shot.hasOwnProperty("outcome")){
+							 	//add goals
+								if(data[i].shot.outcome.name != 'Goal'){
+									players[0][k].links.goals++
+								}
+								//add goal attempts
+								else if(data[i].shot.outcome.name != 'Blocked'){
+									players[0][k].links.blocked++
+								}
+							 }
+						}
+					}
+				}
+							
+			}
 		}
 	}
 		
 	console.log(players[0])
 	console.log(players[1])
+
+
+
+	
+
+
+
+
 
 
 
@@ -234,8 +268,6 @@ d3.json("data.json").then(function(data){
 			document.write("country: " + players[k][i].country.id + " " + players[k][i].country.name + "<br>") 
 			document.write("team: " + players[k][i].team_id + " " + players[k][i].team_name + "<br>") 
 
-			
-
 			for(var j = 0; j<players[k][i].events.length; j++){
 				document.write("timestamp: " + players[k][i].events[j].timestamp +"<br>")
 				 document.write("id: " + players[k][i].events[j].id +"<br>")
@@ -253,16 +285,10 @@ d3.json("data.json").then(function(data){
 						document.write("recipient: " + players[k][i].events[j].pass.recipient.name +"<br>")
 					}	
 				}
-				
-
-
 				document.write("-----------------"  +"<br>")
 			}
 			document.write("=================================================="  +"<br>")
 		}
-		
-		
-
 	}
 
 	// players.forEach(function (player){
