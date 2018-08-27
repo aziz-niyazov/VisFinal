@@ -1,3 +1,26 @@
+//visual setup
+//create svg container
+const width = 1000;
+const height = 500;
+// const team1_center = [height/2,width/4];
+// const team2_center = [height/2,width * 0.75];
+const radius = 200;
+let svgContainer = d3.select("body").append("svg")
+  .attr("width", width)
+  .attr("height", height);
+
+//create element groups
+let diagram1 = svgContainer.append("g");
+let diagram2 = svgContainer.append("g")
+  .attr("transform", "translate(" + width / 2 + ",0)");
+let team1_circles = diagram1.append("g");
+let team1_lines = diagram1.append("g")
+  .attr("transform", "translate(" + width / 4 + "," + height / 2 + ")");
+let team2_circles = diagram2.append("g");
+let team2_lines = diagram2.append("g")
+  .attr("transform", "translate(" + width / 4 + "," + height / 2 + ")");
+
+
 var players = [[],[]]
 
 //TODO create team array
@@ -35,6 +58,7 @@ d3.json("lineups_7298.json")
 		}
 	}
 
+  //TODO check that player json loaded successfully
 })
 
 
@@ -47,7 +71,7 @@ d3.json("data.json")
     return (e.type.name == "Pass" || e.type.name == "Shot");
   });
 
-  //filter for each team - TODO use team array
+  //filter for each team
   var team1_events = useful_events.filter(e => {
     return (e.team.id === players[0][0].team_id);
   });
@@ -62,6 +86,8 @@ d3.json("data.json")
   //calculate links between each player, within each team
   calculatePlayerLinks(players[0]);
   calculatePlayerLinks(players[1]);
+
+  renderDiagrams(players);
 
 })
 
@@ -150,6 +176,10 @@ function calculatePlayerLinks(playerList){
         }
       })
     }
+}
+
+function renderDiagrams(players){
+  //TODO render circles and lines here
 }
 
 console.log(players);
