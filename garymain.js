@@ -2,7 +2,7 @@
 //create svg container
 const width = 1000;
 const height = 500;
-// const team1_center = [height/2,width/4];
+const team1_center = [height/2,width/4];
 // const team2_center = [height/2,width * 0.75];
 const radius = 200;
 let svgContainer = d3.select("body").append("svg")
@@ -180,6 +180,42 @@ function calculatePlayerLinks(playerList){
 
 function renderDiagrams(players){
   //TODO render circles and lines here
+
+  team1_nodes = radialLayout(players[0], team1_center, radius);
+  team2_nodes = radialLayout(players[1], team1_center, radius);
+
+  team1_circles.selectAll("circle")
+  .data(team1_nodes)
+  .enter().append("circle")
+    .attr("cx", (d) => {return d.cx;})
+    .attr("cy", (d) => {return d.cy;})
+    .attr("r", 20)
+    .style("fill", "blue");
+
+  team2_circles.selectAll("circle")
+  .data(team2_nodes)
+  .enter().append("circle")
+    .attr("cx", (d) => {return d.cx;})
+    .attr("cy", (d) => {return d.cy;})
+    .attr("r", 20)
+    .style("fill", "blue");
+}
+
+
+//for each data point calculate position for center of circle
+//take center point and angle derived from number of nodes
+function radialLayout (data, center_point, radius){
+  let angleStep = 2.0 * Math.PI / data.length;
+  //calc dx and dy from angle and radius
+  for (var i = 0; i < data.length; i++) {
+    const angle = angleStep * i;
+    const dx = radius * Math.sin(angle);
+    const dy = radius * Math.cos(angle);
+    //add coords to data
+    data[i].cx = center_point[0] + dx;
+    data[i].cy = center_point[1] + dy;
+  }
+  return data;
 }
 
 console.log(players);
