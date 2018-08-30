@@ -23,8 +23,7 @@ let team2_circles = diagram2.append("g");
 
 
 var players = [[],[]]
-
-//TODO create team array
+var teams = [{},{}]
 
 //loading player info from lineups
 d3.json("lineups_7298.json")
@@ -32,6 +31,9 @@ d3.json("lineups_7298.json")
 
   // for each team
 	for(var i = 0; i < lineups.length; i++){
+
+    teams[i].team_id = lineups[i].team_id;
+    teams[i].team_name = lineups[i].team_name;
 
     //for each player
 		for(var j = 0; j < lineups[i].lineup.length; j++){
@@ -58,6 +60,12 @@ d3.json("lineups_7298.json")
 			}
 		}
 	}
+
+  //set team colours manually
+  teams[0].main_colour = "#1328b2";
+  teams[0].secondary_colour = "#ffffff";
+  teams[1].main_colour = "#82c6ff";
+  teams[1].secondary_colour = "#ffffff";
 
   //TODO check that player json loaded successfully
 })
@@ -214,7 +222,8 @@ function renderDiagrams(players){
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", 20)
-    .style("fill", "blue")
+    .style("fill", teams[0].main_colour)
+    .style("stroke", teams[0].secondary_colour)
     .on("mouseover", mouseovered)
 
   team2_circles.selectAll("circle")
@@ -223,7 +232,8 @@ function renderDiagrams(players){
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", 20)
-    .style("fill", "blue")
+    .style("fill", teams[1].main_colour)
+    .style("stroke", teams[1].secondary_colour)
     .on("mouseover", mouseovered);
 
 }
@@ -231,12 +241,17 @@ function renderDiagrams(players){
 //highlight lines connected to that player on mouseover
 function mouseovered(d) {
 
+
   var lines_to_change;
+  var team;
+
   if (d.team_id === players[0][0].team_id) {
     lines_to_change = team1_lines;
+    team = 1;
   }
   else {
     lines_to_change = team2_lines;
+    team = 2;
   }
 
   lines_to_change.selectAll("path")
@@ -249,25 +264,27 @@ function mouseovered(d) {
       return false;
     })
 
-    //team 1 table
+    //update player info table
+
+
+    var table;
+    if (team === 1) {
+      table = d3.select("#playerinfo_team1");
+    }
+    else {
+      table = d3.select("#playerinfo_team2");
+    }
     let table_data = create_table_data(d);
-    let table = d3.select("#playerinfo_team1");
     table.selectAll("tr").remove();
     let table_rows = table
       .selectAll("tr")
       .data(table_data)
       .enter()
       .append("tr");
-
-    // console.log(table_rows);
-    // console.log(table_data);
-
     table_rows.append("td")
       .text(function (d) {return d.label});
     table_rows.append("td")
       .text(function (d) {return d.value});
-
-
 
 }
 

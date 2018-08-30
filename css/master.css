@@ -20,4 +20,10 @@ circle {
 
 .info_boxes {
   color:white;
+  /* width: 50%; */
+}
+
+#info_box_1{
+  float:left;
+  width: 50%;
 }
