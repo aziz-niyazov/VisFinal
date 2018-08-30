@@ -5,7 +5,7 @@ const height = 500;
 const team1_center = [height/2,width/4];
 // const team2_center = [height/2,width * 0.75];
 const radius = 200;
-let svgContainer = d3.select("body").append("svg")
+let svgContainer = d3.select("body").insert("svg", "#info_box_wrapper")
   .attr("width", width)
   .attr("height", height);
 
@@ -13,12 +13,13 @@ let svgContainer = d3.select("body").append("svg")
 let diagram1 = svgContainer.append("g");
 let diagram2 = svgContainer.append("g")
   .attr("transform", "translate(" + width / 2 + ",0)");
-let team1_circles = diagram1.append("g");
 let team1_lines = diagram1.append("g")
   .attr("transform", "translate(" + width / 4 + "," + height / 2 + ")");
-let team2_circles = diagram2.append("g");
 let team2_lines = diagram2.append("g")
   .attr("transform", "translate(" + width / 4 + "," + height / 2 + ")");
+
+let team1_circles = diagram1.append("g");
+let team2_circles = diagram2.append("g");
 
 
 var players = [[],[]]
@@ -180,27 +181,31 @@ function calculatePlayerLinks(playerList){
 
 function renderDiagrams(players){
 
-
-
-
   team1_nodes = radialLayout(players[0], team1_center, radius);
   team2_nodes = radialLayout(players[1], team1_center, radius);
 
   //TODO render lines here
   //TODO how best to convert player links array into a set of lines with thicknesses?
 
-  team1links = createLinkArray(players[0], radius);
-  // team2links = createLinkArray(players[1], radius);
   let radialLineGenerator = d3.radialLine()
     .curve(d3.curveBasis);
+
+  team1links = createLinkArray(players[0], radius);
+  team2links = createLinkArray(players[1], radius);
 
 
   team1_lines.selectAll('path')
   .data(team1links)
   .enter().append("path")
     .attr('stroke-width', (d) => {return d.stroke_width})
-    .attr('stroke', "grey")
-    .style('fill', 'none')
+    .attr("class", "pass_line")
+    .attr('d', (d) => { return radialLineGenerator(d.link_points)});
+
+  team2_lines.selectAll('path')
+  .data(team2links)
+  .enter().append("path")
+    .attr('stroke-width', (d) => {return d.stroke_width})
+    .attr("class", "pass_line")
     .attr('d', (d) => { return radialLineGenerator(d.link_points)});
 
   team1_circles.selectAll("circle")
@@ -209,7 +214,8 @@ function renderDiagrams(players){
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", 20)
-    .style("fill", "blue");
+    .style("fill", "blue")
+    .on("mouseover", mouseovered)
 
   team2_circles.selectAll("circle")
   .data(team2_nodes)
@@ -217,8 +223,61 @@ function renderDiagrams(players){
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", 20)
-    .style("fill", "blue");
+    .style("fill", "blue")
+    .on("mouseover", mouseovered);
 
+}
+
+//highlight lines connected to that player on mouseover
+function mouseovered(d) {
+
+  var lines_to_change;
+  if (d.team_id === players[0][0].team_id) {
+    lines_to_change = team1_lines;
+  }
+  else {
+    lines_to_change = team2_lines;
+  }
+
+  lines_to_change.selectAll("path")
+    .classed("pass_line--highlight", function (l) {
+      for (let p = 0; p < l.player_ids.length; p++){
+        if (l.player_ids[p] === d.id){
+          return true;
+        }
+      }
+      return false;
+    })
+
+    //team 1 table
+    let table_data = create_table_data(d);
+    let table = d3.select("#playerinfo_team1");
+    table.selectAll("tr").remove();
+    let table_rows = table
+      .selectAll("tr")
+      .data(table_data)
+      .enter()
+      .append("tr");
+
+    // console.log(table_rows);
+    // console.log(table_data);
+
+    table_rows.append("td")
+      .text(function (d) {return d.label});
+    table_rows.append("td")
+      .text(function (d) {return d.value});
+
+
+
+}
+
+function create_table_data(d){
+  let table_data = new Array();
+  table_data.push({label:"Player Name", value:d.name});
+  table_data.push({label:"Country", value:d.country.name});
+  table_data.push({label:"Position", value:"unknown"});//TODO transfer to player object in load
+  table_data.push({label:"Total Passes", value:d.events.length});//TODO not correct - includes shots
+  return table_data;
 }
 
 
@@ -234,7 +293,7 @@ function radialLayout (data, center_point, radius){
     //add coords to data
     data[i].angle = angle;
     data[i].cx = center_point[0] + dx;
-    data[i].cy = center_point[1] + dy;
+    data[i].cy = center_point[1] - dy;
   }
   return data;
 }
@@ -267,6 +326,14 @@ function createLinkArray (players, radius) {
 
           link.link_points = link_points;
           link.stroke_width = strength / 5;
+
+          //add associated players to link info
+          let player_ids = new Array();
+          player_ids.push(players[i].id);
+          if (j < players.length) {
+            player_ids.push(players[j].id);
+          }
+          link.player_ids = player_ids;
 
           linkData.push(link);
         }

@@ -1,0 +1,23 @@
+body {
+    background-color: #1e1f21;
+}
+
+circle {
+	stroke: #999;
+	stroke-width: 2;
+}
+
+.pass_line {
+	fill: none;
+  stroke-opacity: 0.4;
+	stroke: #999;
+}
+
+.pass_line--highlight {
+  stroke-opacity: 0.99;
+  stroke: #fff
+}
+
+.info_boxes {
+  color:white;
+}
