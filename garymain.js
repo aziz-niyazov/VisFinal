@@ -179,10 +179,29 @@ function calculatePlayerLinks(playerList){
 }
 
 function renderDiagrams(players){
-  //TODO render circles and lines here
+
+
+
 
   team1_nodes = radialLayout(players[0], team1_center, radius);
   team2_nodes = radialLayout(players[1], team1_center, radius);
+
+  //TODO render lines here
+  //TODO how best to convert player links array into a set of lines with thicknesses?
+
+  team1links = createLinkArray(players[0], radius);
+  // team2links = createLinkArray(players[1], radius);
+  let radialLineGenerator = d3.radialLine()
+    .curve(d3.curveBasis);
+
+
+  team1_lines.selectAll('path')
+  .data(team1links)
+  .enter().append("path")
+    .attr('stroke-width', (d) => {return d.stroke_width})
+    .attr('stroke', "grey")
+    .style('fill', 'none')
+    .attr('d', (d) => { return radialLineGenerator(d.link_points)});
 
   team1_circles.selectAll("circle")
   .data(team1_nodes)
@@ -199,6 +218,7 @@ function renderDiagrams(players){
     .attr("cy", (d) => {return d.cy;})
     .attr("r", 20)
     .style("fill", "blue");
+
 }
 
 
@@ -212,10 +232,73 @@ function radialLayout (data, center_point, radius){
     const dx = radius * Math.sin(angle);
     const dy = radius * Math.cos(angle);
     //add coords to data
+    data[i].angle = angle;
     data[i].cx = center_point[0] + dx;
     data[i].cy = center_point[1] + dy;
   }
   return data;
 }
+
+function createLinkArray (players, radius) {
+  let angleStep = 2.0 * Math.PI / players.length;
+  let linkData = new Array();
+
+  //for each player
+  for (var i = 0; i < players.length; i++) {
+  // for (var i = 0; i < 1; i++) {
+    //for each link with another player that is not already calculated (only players for now)
+    for (var j = i + 1; j < players[i].links.length - 3; j++) {
+        let link = new Object();
+
+        //calculate strength of linke (number of passes/length of passes)
+        let strength = players[i].links[j].npasses + players[j].links[i].npasses;
+        let LOWER_LIMIT = 3; //min strength needed before showing link
+        if (strength > LOWER_LIMIT){
+
+          //create an array describing the link points,
+          //each element contains [angle, distance from center]
+          let link_points = new Array();
+          //start
+          link_points.push([players[i].angle,radius]);
+          //midpoint
+          link_points.push(getMidpointPosition(players[i].angle, players[j].angle, angleStep, radius));
+          //end
+          link_points.push([players[j].angle, radius]);
+
+          link.link_points = link_points;
+          link.stroke_width = strength / 5;
+
+          linkData.push(link);
+        }
+
+
+
+    }
+  }
+  // console.log(linkData);
+  return linkData;
+}
+
+//calculates midpoint position of a radial line, given two points
+//helps separate lines properly
+function getMidpointPosition(angle_1, angle_2, angleStep, radius){
+
+  let smaller_a = Math.min(angle_1, angle_2);
+  let bigger_a = Math.max(angle_1, angle_2);
+
+  if (Math.abs(bigger_a - smaller_a) > Math.abs(bigger_a - (smaller_a + (2.0*Math.PI)))){
+    smaller_a += (2.0*Math.PI);
+  }
+  let midpoint = (smaller_a + bigger_a) / 2.0;
+  let angle_diff = Math.abs(smaller_a-bigger_a);
+
+  if (midpoint > (2.0*Math.PI)) {midpoint -= (2.0*Math.PI);  } // check midpoint is in range of a circle
+
+  const TENSION = 0.5;//high means less curvy
+  let radius_factor = (angle_diff - angleStep) / (Math.PI - angleStep); //value / range
+  let abs_radius = (1.0 - radius_factor) * radius * TENSION;
+  return [midpoint, abs_radius];
+}
+
 
 console.log(players);
