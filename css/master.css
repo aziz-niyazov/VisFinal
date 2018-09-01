@@ -2,6 +2,15 @@ body {
     background-color: #1e1f21;
 }
 
+text.jersey_numbers {
+  font-size: 20px;
+  font-family: sans-serif;
+  font:impact;
+
+  fill:white;
+
+}
+
 circle {
 	stroke: #999;
 	stroke-width: 2;

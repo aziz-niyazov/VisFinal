@@ -10,7 +10,8 @@ let svgContainer = d3.select("body").insert("svg", "#info_box_wrapper")
   .attr("height", height);
 
 //create element groups
-let diagram1 = svgContainer.append("g");
+let diagram1 = svgContainer.append("g")
+  .attr("transform", "rotate(0,250,250)");
 let diagram2 = svgContainer.append("g")
   .attr("transform", "translate(" + width / 2 + ",0)");
 let team1_lines = diagram1.append("g")
@@ -20,6 +21,12 @@ let team2_lines = diagram2.append("g")
 
 let team1_circles = diagram1.append("g");
 let team2_circles = diagram2.append("g");
+
+var team1_numbers;
+var team2_numbers;
+
+let diagram1_rotation = 0;
+let diagram2_rotation = 0;
 
 
 var players = [[],[]]
@@ -216,26 +223,73 @@ function renderDiagrams(players){
     .attr("class", "pass_line")
     .attr('d', (d) => { return radialLineGenerator(d.link_points)});
 
-  team1_circles.selectAll("circle")
-  .data(team1_nodes)
-  .enter().append("circle")
+  let node_r = 20;
+
+  let team1_enter = team1_circles.selectAll("circle")
+  .data(team1_nodes).enter();
+
+  team1_enter.append("circle")
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
-    .attr("r", 20)
+    .attr("r", node_r)
     .style("fill", teams[0].main_colour)
     .style("stroke", teams[0].secondary_colour)
     .on("mouseover", mouseovered)
+    .on("click", rotate_transition);
 
-  team2_circles.selectAll("circle")
-  .data(team2_nodes)
-  .enter().append("circle")
+
+  team1_numbers = team1_enter.append("text")
+    .attr("x", (d) => {return d.cx - node_r/2;})
+    .attr("y", (d) => {return d.cy + node_r/3;})
+    .text((d) => {return d.jersey_number})
+    .classed("jersey_numbers", true);
+
+  let team2_enter = team2_circles.selectAll("circle")
+  .data(team2_nodes).enter()
+  team2_enter.append("circle")
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
-    .attr("r", 20)
+    .attr("r", node_r)
     .style("fill", teams[1].main_colour)
     .style("stroke", teams[1].secondary_colour)
     .on("mouseover", mouseovered);
+  team2_enter.append("text")
+    .attr("x", (d) => {return d.cx - node_r/2;})
+    .attr("y", (d) => {return d.cy + node_r/3;})
+    .text((d) => {return d.jersey_number})
+    .classed("jersey_numbers", true);
 
+}
+
+function rotate_transition(d) {
+
+  const duration = 1000;
+  // The amount we need to rotate:
+  let rotate = -d.angle * 180 / Math.PI;
+  while (rotate < -180){
+    rotate += 360;
+  }
+
+
+  var center = "" + team1_center[0] + "," +  team1_center[1];
+
+
+  diagram1.transition()
+  .attrTween("transform", function() {
+          return d3.interpolateString(diagram1.attr("transform"), "rotate(" + rotate + "," + center + ")");
+        })
+  .duration(duration);
+
+
+  // Τransition the labels so they stay upright
+  team1_numbers.transition()
+    .attrTween("transform", function(t) {
+            var center = "" + t.cx + "," +  t.cy;
+            return d3.interpolateString("rotate(0," + center + ")", "rotate(" + -rotate + "," + center + ")");
+          })
+    .duration(duration);
+
+  diagram1_rotation = rotate;
 }
 
 //highlight lines connected to that player on mouseover
