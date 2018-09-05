@@ -285,9 +285,13 @@ function rotate_transition(d) {
   team1_numbers.transition()
     .attrTween("transform", function(t) {
             var center = "" + t.cx + "," +  t.cy;
-            return d3.interpolateString("rotate(0," + center + ")", "rotate(" + -rotate + "," + center + ")");
-          })
+            return d3.interpolateString("rotate(" + -diagram1_rotation + "," + center + ")", "rotate(" + -rotate + "," + center + ")");
+            // return d3.interpolateString(diagram1.select("text").attr("transform"), "rotate(" + -rotate + "," + center + ")");
+        })
     .duration(duration);
+
+    console.log(rotate);
+    // console.log(diagram1_rotation);
 
   diagram1_rotation = rotate;
 }
