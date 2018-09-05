@@ -1,23 +1,23 @@
 //visual setup
 //create svg container
-const width = 1000;
-const height = 500;
-const team1_center = [height/2,width/4];
-// const team2_center = [height/2,width * 0.75];
+const svg_width = 1000;
+const svg_height = 500;
+const team1_center = [svg_width/4,svg_height/2];
 const radius = 200;
 let svgContainer = d3.select("body").insert("svg", "#info_box_wrapper")
-  .attr("width", width)
-  .attr("height", height);
+  .attr("width", svg_width)
+  .attr("height", svg_height);
 
 //create element groups
 let diagram1 = svgContainer.append("g")
   .attr("transform", "rotate(0,250,250)");
 let diagram2 = svgContainer.append("g")
-  .attr("transform", "translate(" + width / 2 + ",0)");
+  .attr("transform", "translate(" + svg_width / 2 + ",0)");
+
 let team1_lines = diagram1.append("g")
-  .attr("transform", "translate(" + width / 4 + "," + height / 2 + ")");
+  .attr("transform", "translate(" + svg_width / 4 + "," + svg_height / 2 + ")");
 let team2_lines = diagram2.append("g")
-  .attr("transform", "translate(" + width / 4 + "," + height / 2 + ")");
+  .attr("transform", "translate(" + svg_width / 4 + "," + svg_height / 2 + ")");
 
 let team1_circles = diagram1.append("g");
 let team2_circles = diagram2.append("g");
@@ -27,6 +27,8 @@ var team2_numbers;
 
 let diagram1_rotation = 0;
 let diagram2_rotation = 0;
+
+let card1_svg
 
 
 var players = [[],[]]
@@ -199,9 +201,7 @@ function renderDiagrams(players){
   team1_nodes = radialLayout(players[0], team1_center, radius);
   team2_nodes = radialLayout(players[1], team1_center, radius);
 
-  //TODO render lines here
-  //TODO how best to convert player links array into a set of lines with thicknesses?
-
+  //to create lines
   let radialLineGenerator = d3.radialLine()
     .curve(d3.curveBasis);
 
@@ -209,6 +209,7 @@ function renderDiagrams(players){
   team2links = createLinkArray(players[1], radius);
 
 
+  //render lines
   team1_lines.selectAll('path')
   .data(team1links)
   .enter().append("path")
@@ -223,8 +224,10 @@ function renderDiagrams(players){
     .attr("class", "pass_line")
     .attr('d', (d) => { return radialLineGenerator(d.link_points)});
 
-  let node_r = 20;
+  let node_r = 20; //circle radius
 
+
+  //render circles:
   let team1_enter = team1_circles.selectAll("circle")
   .data(team1_nodes).enter();
 
@@ -235,8 +238,7 @@ function renderDiagrams(players){
     .style("fill", teams[0].main_colour)
     .style("stroke", teams[0].secondary_colour)
     .on("mouseover", mouseovered)
-    .on("click", rotate_transition);
-
+    // .on("click", rotate_transition);
 
   team1_numbers = team1_enter.append("text")
     .attr("x", (d) => {return d.cx - node_r/2;})
@@ -261,44 +263,40 @@ function renderDiagrams(players){
 
 }
 
-function rotate_transition(d) {
-
-  const duration = 1000;
-  // The amount we need to rotate:
-  let rotate = -d.angle * 180 / Math.PI;
-  while (rotate < -180){
-    rotate += 360;
-  }
-
-
-  var center = "" + team1_center[0] + "," +  team1_center[1];
-
-
-  diagram1.transition()
-  .attrTween("transform", function() {
-          return d3.interpolateString(diagram1.attr("transform"), "rotate(" + rotate + "," + center + ")");
-        })
-  .duration(duration);
+// function rotate_transition(d) {
+//
+//   const duration = 1000;
+//   // The amount we need to rotate:
+//   let rotate = -d.angle * 180 / Math.PI;
+//   while (rotate < -180){
+//     rotate += 360;
+//   }
+//
+//   var center = "" + team1_center[0] + "," +  team1_center[1];
+//   diagram1.transition()
+//   .attrTween("transform", function() {
+//           return d3.interpolateString(diagram1.attr("transform"), "rotate(" + rotate + "," + center + ")");
+//         })
+//   .duration(duration);
 
 
   // Τransition the labels so they stay upright
-  team1_numbers.transition()
-    .attrTween("transform", function(t) {
-            var center = "" + t.cx + "," +  t.cy;
-            return d3.interpolateString("rotate(" + -diagram1_rotation + "," + center + ")", "rotate(" + -rotate + "," + center + ")");
-            // return d3.interpolateString(diagram1.select("text").attr("transform"), "rotate(" + -rotate + "," + center + ")");
-        })
-    .duration(duration);
+  // team1_numbers.transition()
+  //   .attrTween("transform", function(t) {
+  //           var center = "" + t.cx + "," +  t.cy;
+  //           return d3.interpolateString("rotate(" + -diagram1_rotation + "," + center + ")", "rotate(" + -rotate + "," + center + ")");
+  //           // return d3.interpolateString(diagram1.select("text").attr("transform"), "rotate(" + -rotate + "," + center + ")");
+  //       })
+  //   .duration(duration);
 
-    console.log(rotate);
-    // console.log(diagram1_rotation);
+//
+//   diagram1_rotation = rotate;
+// }
 
-  diagram1_rotation = rotate;
-}
 
+//hover function for circles
 //highlight lines connected to that player on mouseover
 function mouseovered(d) {
-
 
   var lines_to_change;
   var team;
@@ -323,8 +321,6 @@ function mouseovered(d) {
     })
 
     //update player info table
-
-
     var table;
     if (team === 1) {
       table = d3.select("#playerinfo_team1");
