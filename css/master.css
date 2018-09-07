@@ -1,0 +1,138 @@
+body {
+    background-color: #1e1f21;
+    margin:0;
+    height:100%;
+}
+
+
+.title {
+  color: white;
+  font-size: 60%;
+  font-family: Verdana, Geneva, sans-serif;
+  height: 14%;
+  width: 49%;
+  position: fixed;
+  line-height: 100%;
+
+}
+.left {
+  left: 0;
+  text-align: right;
+  padding-right: 1%;
+}
+.right {
+  right: 0;
+  text-align: left;
+  padding-left: 1%;
+}
+
+.score_number {
+  font-size: 500%;
+  padding-top: 0;
+}
+
+
+text.jersey_numbers {
+  font-size: 20px;
+  font-family: sans-serif;
+  font:impact;
+  pointer-events: none;
+  fill:white;
+
+}
+
+circle {
+	stroke: #999;
+	stroke-width: 2;
+}
+
+.pass_line {
+	fill: none;
+  stroke-opacity: 0.2;
+	stroke: #fff;
+}
+
+.pass_line--highlight {
+  stroke-opacity: 0.99;
+  stroke: #fff
+}
+
+.comp_box_title{
+  fill:white;
+  text-anchor:middle;
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+#comparison_box {
+
+  	fill: #555;
+    stroke-width: 1;
+  	stroke: #fff;
+}
+
+.lock_btn{
+  opacity: 0.7;
+  rx:5;
+  ry:5;
+  width:5.8%;
+  height:2.6%;
+  y:0.5%;
+}
+rect.btn_l{
+  x:9%;
+}
+rect.btn_r{
+  x:15.3%;
+}
+rect.lock_btn_lock{
+  fill:green;
+  stroke:#292;
+}
+rect.lock_btn_unlock{
+  fill:red;
+  stroke:#922;
+}
+
+
+text.stats {
+  fill:#999;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 60%;
+}
+text.stat_number {
+  fill:#fff;
+}
+text.sl{
+  text-anchor:start;
+}
+text.sr{
+  text-anchor:end;
+}
+
+/* rect.stats_bars_l{
+
+}
+rect.stats_bars_l{
+} */
+
+rect.player_card{
+
+  y:0;
+  height:17%;
+  fill:none;
+  rx:10px;
+  ry:10px;
+  stroke:#474a4f;
+}
+
+
+
+text.card_text{
+  fill:#999;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 60%;
+}
+text.card_field{
+  fill:#fff;
+  font-family: Verdana, Geneva, sans-serif;
+}
