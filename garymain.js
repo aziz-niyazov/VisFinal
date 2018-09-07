@@ -1,9 +1,9 @@
 //visual setup
 //create svg container
-const svg_width = window.innerWidth * 0.96;
+const svg_width = window.innerWidth;
 const svg_height = window.innerHeight;
 const team1_center = [svg_width/6,svg_height*0.5];
-const radius = svg_width / 7;
+const radius = Math.min(svg_width / 7, svg_height / 4);
 const node_r = svg_width / 60; //circle radius
 let svgContainer = d3.select("body").append("svg")
   .attr("width", svg_width)
@@ -30,6 +30,10 @@ let comparison_box = svgContainer.append("g")
   .attr("transform", "translate(" + svg_width * 0.35 + "," + svg_height * 0.3 + ")");
 const cb_width = svg_width * 0.3;
 const cb_height = svg_height * 0.4;
+comparison_box.append("text").text("Comparison")
+  .attr("x",cb_width / 2)
+  .attr("y", -cb_height / 30)
+  .classed("comp_box_title", true);
 comparison_box.append("rect")
   .attr("x", 0)
   .attr("y", 0)
@@ -52,12 +56,30 @@ let comparison_box_t2 = comparison_box.append("g")
 
 var comp_player_1;
 var comp_player_2;
+var comp_lock = 0;
 
 var team1_numbers;
 var team2_numbers;
 
 let diagram1_rotation = 0;
 let diagram2_rotation = 0;
+
+
+//creating a rectangle
+let card_width = radius*1.5;
+let cardContainer = svgContainer.append("g")
+  .attr("transform","translate(0, " + (team1_center[1] + radius + (node_r*2)) + ")");
+let card1 = cardContainer.append("g")
+  .attr("transform", "translate(" + (team1_center[0] - (radius*0.75)) + ",0)");
+let card2 = cardContainer.append("g")
+  .attr("transform", "translate(" + ((team1_center[0] - (radius*0.75)) + (svg_width * 2 / 3)) + ",0)");
+
+card1.append("rect")
+  .classed("player_card", true)
+  .attr("width", card_width);
+card2.append("rect")
+  .classed("player_card", true)
+  .attr("width", card_width);
 
 var players = [[],[]]
 var teams = [{},{}]
@@ -112,6 +134,7 @@ d3.json("lineups_7298.json")
 			p = new Object()
 			p.id = lineups[i].lineup[j].player_id
 			p.name = lineups[i].lineup[j].player_name
+      p.position = "(Substitute)";
 			p.jersey_number = lineups[i].lineup[j].jersey_number
 
 			p.country = new Object()
@@ -141,6 +164,8 @@ d3.json("lineups_7298.json")
 d3.json("data.json")
   .then(function(data){
 
+  console.log(data);
+
   //filter to only passes and shots
   var useful_events = data.filter(e => {
     return (e.type.name == "Pass" || e.type.name == "Shot");
@@ -158,6 +183,9 @@ d3.json("data.json")
   allocateEvents(players[0], team1_events);
   allocateEvents(players[1], team2_events);
 
+  get_position(players[0], data[0].tactics.lineup)
+  get_position(players[1], data[1].tactics.lineup)
+
   //calculate links between each player, within each team
   calculatePlayerLinks(players[0]);
   calculatePlayerLinks(players[1]);
@@ -171,6 +199,16 @@ d3.json("data.json")
   console.log(players);
 
 })
+
+function get_position(playerList,lineupList) {
+  for(var i = 0; i<lineupList.length; i++){
+    for(var j = 0; j<playerList.length; j++){
+       if(lineupList[i].player.id == playerList[j].id){
+          playerList[j].position = lineupList[i].position.name
+       }
+    }
+  }
+}
 
 function allocateEvents(playerList, eventList){
   //allocate each event to the relevant player
@@ -269,8 +307,10 @@ function calculatePlayerStats(playerList){
 
     //total Passes
     let total_passes = 0;
+    let pass_length = 0;
     for (var link = 0; link < playerList[p].links.length - 2; link++) {
       total_passes += playerList[p].links[link].npasses;
+      pass_length += playerList[p].links[link].length;
     }
     let pass_completion = (1.0 - (playerList[p].links[playerList[p].links.length-3].npasses / total_passes)) * 100.0;
     let goals = playerList[p].links[playerList[p].links.length-2].npasses;
@@ -278,6 +318,7 @@ function calculatePlayerStats(playerList){
 
     statistics.push({"Passes":total_passes});
     statistics.push({"Pass Completion (%)":pass_completion});
+    statistics.push({"Total Pass Length (m)":pass_length});
     statistics.push({"Shots":shots});
     statistics.push({"Goals":goals});
 
@@ -373,31 +414,46 @@ function update_comparison(p) {
     comp_player_2 = p;
   }
 
-  //update comparison texts
+  //remove previous texts and bars
   cp_pane.selectAll("text").remove();
   comparison_box_bars.selectAll("rect").remove();
+
 
   let stat_bars = comparison_box_bars.selectAll("rect")
     .data(p.statistics).enter();
 
+  //check there are players to compare before drawing bars
   if (comp_player_1 !== undefined && comp_player_2 !== undefined){
+
+    //draw lock / unlock buttons
+    comparison_box.selectAll(".lock_btn").remove();
+    comparison_box.append("rect")
+      .classed("lock_btn", true)
+      .classed("btn_l", true)
+      .classed("lock_btn_lock", function () {
+
+      });
+    comparison_box.append("rect")
+      .classed("lock_btn", true)
+      .classed("btn_r", true)
+      .classed("lock_btn_unlock", true);
 
     //stat bars - base bars (away team colour)
     stat_bars.append("rect")
-      .attr("x",pad/2 )
-      .attr("y", function(d,i){return ((i * px_per_line) + (px_per_line * 0.7));})
-      .attr("width", cb_width - (pad))
+      .attr("x",pad * 0.8 )
+      .attr("y", function(d,i){return ((i * px_per_line) + (px_per_line * 0.75));})
+      .attr("width", cb_width - (pad*1.6))
       .attr("height", px_per_line / 3)
       .style("fill", function(d){
         if (!isNaN(parseFloat(d3.values(d)[0]))){return teams[1].main_colour}
         else {return "none";}
-      })
-      .classed("stats_bars", true);
+      });
+      // .classed("stats_bars", true);
 
     //stat bars - variable length
     stat_bars.append("rect")
-      .attr("x", pad/2)
-      .attr("y", function(d,i){return ((i * px_per_line) + (px_per_line * 0.7));})
+      .attr("x", pad * 0.8)
+      .attr("y", function(d,i){return ((i * px_per_line) + (px_per_line * 0.75));})
       .attr("width", function(d,i){ // get width by comparing with other players stats
         if (isNaN(parseFloat(d3.values(d)[0]))){
           return 0; //if not a numeric stat, return 0 - wont be shown
@@ -412,15 +468,14 @@ function update_comparison(p) {
           else {
             factor = p1_val / (p1_val + p2_val);
           }
-          return factor * (cb_width - pad);
+          return factor * (cb_width - (pad*1.6));
         }
       })
       .attr("height", px_per_line / 3)
       .style("fill", function(d){
         if (!isNaN(parseFloat(d3.values(d)[0]))){return teams[0].main_colour}
         else {return "none";}
-      })
-      .classed("stats_bars", true);
+      });
   }
 
   //labels
@@ -428,7 +483,7 @@ function update_comparison(p) {
     .data(p.statistics).enter();
   stats_entries.append("text")
     .attr("x", x_pos)
-    .attr("y", function(d,i){return (i * px_per_line) + (px_per_line / 2);})
+    .attr("y", function(d,i){return (i * px_per_line) + (px_per_line * 0.6);})
     .text((d) => {return d3.keys(d)[0]})
     .classed("stats", true)
     .classed("sl", (d) => {return cp_pane === comparison_box_t1;})
@@ -439,7 +494,8 @@ function update_comparison(p) {
     .attr("y", function(d,i){return (i+1) * px_per_line;})
     .text((d) => {
       let format = d3.format(".0f");
-      if (d3.keys(d)[0] == "Pass Completion (%)") { // format percentage correctly
+      if (d3.keys(d)[0] == "Pass Completion (%)" || d3.keys(d)[0] == "Total Pass Length (m)") {
+        // format percentage correctly
         return format(d3.values(d)[0]);
       }
       return d3.values(d)[0];
@@ -510,26 +566,62 @@ function mouseovered(d) {
       }
       return false;
     })
+    //update player info card
+    var card;
+    if (team === 1) {card = card1;}
+    else {card = card2;}
 
-    //update player info table
-    // var table;
-    // if (team === 1) {
-    //   table = d3.select("#playerinfo_team1");
-    // }
-    // else {
-    //   table = d3.select("#playerinfo_team2");
-    // }
-    // let table_data = create_table_data(d);
-    // table.selectAll("tr").remove();
-    // let table_rows = table
-    //   .selectAll("tr")
-    //   .data(table_data)
-    //   .enter()
-    //   .append("tr");
-    // table_rows.append("td")
-    //   .text(function (d) {return d.label});
-    // table_rows.append("td")
-    //   .text(function (d) {return d.value});
+
+    //select existing rectangle that has been drawn in render
+    card.select("rect")
+      .style("fill","#555")
+      .style("stroke", "#fff")
+
+    //add labels
+    card.selectAll(".card_text").remove();
+    card.append("text")
+          .attr("x", card_width * 0.4)
+          .attr("y", card_width * 0.06)
+          .text("Name: ")
+          .classed("card_text", true);
+    card.append("text")
+          .attr("x", card_width * 0.4)
+          .attr("y", card_width * 0.18)
+          .text("Country: ")
+          .classed("card_text", true);
+    card.append("text")
+          .attr("x", card_width * 0.4)
+          .attr("y", card_width * 0.30)
+          .text("Position: ")
+          .classed("card_text", true);
+
+    card.append("text")
+          .attr("x", card_width * 0.4)
+          .attr("y", card_width * 0.12)
+          .text(d.name)
+          .classed("card_field", true)
+          .classed("card_text", true);
+    card.append("text")
+          .attr("x", card_width * 0.4)
+          .attr("y", card_width * 0.24)
+          .text(d.country.name)
+          .classed("card_field", true)
+          .classed("card_text", true);
+    card.append("text")
+          .attr("x", card_width * 0.4)
+          .attr("y", card_width * 0.36)
+          .text(d.position)
+          .classed("card_field", true)
+          .classed("card_text", true);
+
+    card.selectAll("image").remove();
+    let card_player_img = card.append("image")
+          .attr('xlink:href', 'player_icon.png')
+          .attr("x", 0)
+          .attr("y", svg_height * 0.01)
+          .attr('width', card_width * 0.4)
+          .attr('height', svg_height * 0.15)
+
 
 }
 
@@ -560,6 +652,7 @@ function radialLayout (data, center_point, radius){
   return data;
 }
 
+//create link array to be used as a selection for rendering
 function createLinkArray (players, radius) {
   let angleStep = 2.0 * Math.PI / players.length;
   let linkData = new Array();
@@ -571,9 +664,9 @@ function createLinkArray (players, radius) {
     for (var j = i + 1; j < players[i].links.length - 3; j++) {
         let link = new Object();
 
-        //calculate strength of linke (number of passes/length of passes)
+        //calculate strength of linke (number of passes or length of passes)
         let strength = players[i].links[j].npasses + players[j].links[i].npasses;
-        let LOWER_LIMIT = 3; //min strength needed before showing link
+        let LOWER_LIMIT = 2; //min strength needed before showing link
         if (strength > LOWER_LIMIT){
 
           //create an array describing the link points,
@@ -587,7 +680,7 @@ function createLinkArray (players, radius) {
           link_points.push([players[j].angle, radius]);
 
           link.link_points = link_points;
-          link.stroke_width = strength / 5;
+          link.stroke_width = strength * (radius / 300);
 
           //add associated players to link info
           let player_ids = new Array();
@@ -599,9 +692,6 @@ function createLinkArray (players, radius) {
 
           linkData.push(link);
         }
-
-
-
     }
   }
   // console.log(linkData);
