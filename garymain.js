@@ -340,14 +340,18 @@ function renderDiagrams(players){
   .enter().append("path")
     .attr('stroke-width', (d) => {return d.stroke_width})
     .attr("class", "pass_line")
-    .attr('d', (d) => { return radialLineGenerator(d.link_points)});
+    .attr('d', (d) => { return radialLineGenerator(d.link_points)})
+    .on("mouseover", link_hover)
+    .on("mouseout", link_mouseout);
 
   team2_lines.selectAll('path')
   .data(team2links)
   .enter().append("path")
     .attr('stroke-width', (d) => {return d.stroke_width})
     .attr("class", "pass_line")
-    .attr('d', (d) => { return radialLineGenerator(d.link_points)});
+    .attr('d', (d) => { return radialLineGenerator(d.link_points)})
+    .on("mouseover", link_hover)
+    .on("mouseout", link_mouseout);
 
   //render circles:
   let team1_enter = team1_circles.selectAll("circle")
@@ -418,28 +422,11 @@ function update_comparison(p) {
   cp_pane.selectAll("text").remove();
   comparison_box_bars.selectAll("rect").remove();
 
-
   let stat_bars = comparison_box_bars.selectAll("rect")
     .data(p.statistics).enter();
 
-
-  console.log(stat_bar_widths);
-
   //check there are players to compare before drawing bars
   if (comp_player_1 !== undefined && comp_player_2 !== undefined){
-
-    //draw lock / unlock buttons
-    // comparison_box.selectAll(".lock_btn").remove();
-    // comparison_box.append("rect")
-    //   .classed("lock_btn", true)
-    //   .classed("btn_l", true)
-    //   .classed("lock_btn_lock", function () {
-    //
-    //   });
-    // comparison_box.append("rect")
-    //   .classed("lock_btn", true)
-    //   .classed("btn_r", true)
-    //   .classed("lock_btn_unlock", true);
 
     //stat bars - base bars (away team colour)
     stat_bars.append("rect")
@@ -599,9 +586,11 @@ function mouseovered(d) {
     .classed("pass_line--highlight", function (l) {
       for (let p = 0; p < l.player_ids.length; p++){
         if (l.player_ids[p] === d.id){
+          l.highlighted = true;
           return true;
         }
       }
+      l.highlighted = false;
       return false;
     })
     //update player info card
@@ -663,15 +652,38 @@ function mouseovered(d) {
 
 }
 
-// function create_table_data(d){
-//   let table_data = new Array();
-//   table_data.push({label:"Player Name", value:d.name});
-//   table_data.push({label:"Country", value:d.country.name});
-//   table_data.push({label:"Position", value:"unknown"});//TODO transfer to player object in load
-//   table_data.push({label:"Total Passes", value:d.events.length});//TODO not correct - includes shots
-//   return table_data;
-// }
+//show a label when a highlighted link is hovered over
+function link_hover(d) {
+  var slot;
+  if (d.team_id === teams[0].team_id){
+    slot = slot1;
+  }
+  else {
+    slot = slot2;
+  }
 
+  slot.selectAll(".link_label").remove();
+
+  if (d.highlighted) {
+
+    let rect_width = radius;
+    slot.append("rect")
+      .classed("link_label",true)
+      .classed("link_label_bg",true)
+
+    slot.append("text")
+      .classed("link_label",true)
+      .attr("x", team1_center[0])
+      .attr("y", team1_center[1])
+      .text("Passes: " + d.strength);
+  }
+}
+
+//removes pass number label - bit flashy
+function link_mouseout(d){
+    // slot1.selectAll(".link_label").remove();
+    // slot2.selectAll(".link_label").remove();
+}
 
 //for each data point calculate position for center of circle
 //take center point and angle derived from number of nodes
@@ -701,9 +713,13 @@ function createLinkArray (players, radius) {
     //for each link with another player that is not already calculated (only players for now)
     for (var j = i + 1; j < players[i].links.length - 3; j++) {
         let link = new Object();
+        link.highlighted = false;
+        link.team_id = players[i].team_id;
 
         //calculate strength of linke (number of passes or length of passes)
         let strength = players[i].links[j].npasses + players[j].links[i].npasses;
+        link.strength = strength;
+
         let LOWER_LIMIT = 2; //min strength needed before showing link
         if (strength > LOWER_LIMIT){
 
@@ -719,6 +735,7 @@ function createLinkArray (players, radius) {
 
           link.link_points = link_points;
           link.stroke_width = strength * (radius / 300);
+
 
           //add associated players to link info
           let player_ids = new Array();
