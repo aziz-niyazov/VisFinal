@@ -75,9 +75,19 @@ circle {
 
 #comparison_box {
 
+    x:0;
+    y:0;
   	fill: #555;
     stroke-width: 1;
   	stroke: #fff;
+    rx:20;
+    ry:20;
+
+}
+#comparison_box_line{
+  y:0;
+  stroke:white;
+  stroke_width:2;
 }
 
 .lock_btn{

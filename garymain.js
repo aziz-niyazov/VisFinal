@@ -3,6 +3,7 @@
 const svg_width = window.innerWidth;
 const svg_height = window.innerHeight;
 const team1_center = [svg_width/6,svg_height*0.5];
+const team2_center = [svg_width*(5/6),svg_height*0.5];
 const radius = Math.min(svg_width / 7, svg_height / 4);
 const node_r = svg_width / 60; //circle radius
 let svgContainer = d3.select("body").append("svg")
@@ -12,10 +13,14 @@ let svgContainer = d3.select("body").append("svg")
 
 
 //create element groups
-let diagram1 = svgContainer.append("g");
-  // .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
-let diagram2 = svgContainer.append("g")
+let slot1 = svgContainer.append("g");
+let slot2 = svgContainer.append("g")
   .attr("transform", "translate(" + svg_width * 2 / 3 + ",0)");
+
+let diagram1 = slot1.append("g")
+  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
+let diagram2 = slot2.append("g")
+  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
 
 let team1_lines = diagram1.append("g")
   .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
@@ -35,20 +40,14 @@ comparison_box.append("text").text("Comparison")
   .attr("y", -cb_height / 30)
   .classed("comp_box_title", true);
 comparison_box.append("rect")
-  .attr("x", 0)
-  .attr("y", 0)
   .attr("width", cb_width)
   .attr("height", cb_height)
-  .attr("rx", 20)
-  .attr("ry", 20)
   .attr("id", "comparison_box");
 comparison_box.append("line")
   .attr("x1", cb_width / 2)
-  .attr("y1", 0)
   .attr("x2", cb_width / 2)
   .attr("y2", cb_height)
-  .style("stroke", "white")
-  .style("stroke_width", 2);
+  .attr("id", "comparison_box_line");
 let comparison_box_bars = comparison_box.append("g");
 let comparison_box_t1 = comparison_box.append("g");
 let comparison_box_t2 = comparison_box.append("g")
@@ -56,13 +55,13 @@ let comparison_box_t2 = comparison_box.append("g")
 
 var comp_player_1;
 var comp_player_2;
-var comp_lock = 0;
+// var comp_lock = 0;
 
 var team1_numbers;
 var team2_numbers;
 
-let diagram1_rotation = 0;
-let diagram2_rotation = 0;
+var diagram1_rotation = 0;
+var diagram2_rotation = 0;
 
 
 //creating a rectangle
@@ -101,6 +100,7 @@ d3.json("matchdata_37.json")
     teams[1].team_id = match_data.away_team.away_team_id;
     teams[1].team_name = match_data.away_team.away_team_name;
 
+    //draw title with team names
     let title_bar = d3.select("body").insert("div", ":first-child")
       .attr("id", "titlebar");
     let home_title = title_bar.append("div").attr("class", "title left")
@@ -136,11 +136,9 @@ d3.json("lineups_7298.json")
 			p.name = lineups[i].lineup[j].player_name
       p.position = "(Substitute)";
 			p.jersey_number = lineups[i].lineup[j].jersey_number
-
 			p.country = new Object()
 			p.country.id = lineups[i].lineup[j].country.id
 			p.country.name = lineups[i].lineup[j].country.name
-
 			p.team_id = lineups[i].team_id
 			p.team_name = lineups[i].team_name
 
@@ -164,7 +162,6 @@ d3.json("lineups_7298.json")
 d3.json("data.json")
   .then(function(data){
 
-  console.log(data);
 
   //filter to only passes and shots
   var useful_events = data.filter(e => {
@@ -194,12 +191,9 @@ d3.json("data.json")
   calculatePlayerStats(players[1]);
 
   renderDiagrams(players);
-
-
-  console.log(players);
-
 })
 
+//gets positions of each player from the main data JSON
 function get_position(playerList,lineupList) {
   for(var i = 0; i<lineupList.length; i++){
     for(var j = 0; j<playerList.length; j++){
@@ -365,7 +359,7 @@ function renderDiagrams(players){
     .style("fill", teams[0].main_colour)
     .style("stroke", teams[0].secondary_colour)
     .on("mouseover", mouseovered)
-    .on("click", update_comparison);
+    .on("click", on_node_click);
     // .on("click", rotate_transition);
   //numbers
   team1_numbers = team1_enter.append("text")
@@ -376,7 +370,7 @@ function renderDiagrams(players){
     .classed("jersey_numbers", true);
 
   let team2_enter = team2_circles.selectAll("circle")
-  .data(team2_nodes).enter()
+  .data(team2_nodes).enter();
   team2_enter.append("circle")
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
@@ -384,15 +378,20 @@ function renderDiagrams(players){
     .style("fill", teams[1].main_colour)
     .style("stroke", teams[1].secondary_colour)
     .on("mouseover", mouseovered)
-    .on("click", update_comparison);
+    .on("click", on_node_click);
   //numbers
-  team2_enter.append("text")
+  team2_numbers = team2_enter.append("text")
     .attr("x", (d) => {return d.cx - node_r/2;})
     .attr("y", (d) => {return d.cy + node_r/3;})
     .style("font-size", node_r)
     .text((d) => {return d.jersey_number})
     .classed("jersey_numbers", true);
 
+}
+
+function on_node_click(d){
+  update_comparison(d);
+  rotate_transition(d);
 }
 
 //show a player in the comparison box
@@ -426,17 +425,17 @@ function update_comparison(p) {
   if (comp_player_1 !== undefined && comp_player_2 !== undefined){
 
     //draw lock / unlock buttons
-    comparison_box.selectAll(".lock_btn").remove();
-    comparison_box.append("rect")
-      .classed("lock_btn", true)
-      .classed("btn_l", true)
-      .classed("lock_btn_lock", function () {
-
-      });
-    comparison_box.append("rect")
-      .classed("lock_btn", true)
-      .classed("btn_r", true)
-      .classed("lock_btn_unlock", true);
+    // comparison_box.selectAll(".lock_btn").remove();
+    // comparison_box.append("rect")
+    //   .classed("lock_btn", true)
+    //   .classed("btn_l", true)
+    //   .classed("lock_btn_lock", function () {
+    //
+    //   });
+    // comparison_box.append("rect")
+    //   .classed("lock_btn", true)
+    //   .classed("btn_r", true)
+    //   .classed("lock_btn_unlock", true);
 
     //stat bars - base bars (away team colour)
     stat_bars.append("rect")
@@ -509,35 +508,58 @@ function update_comparison(p) {
 
 }
 
-// function rotate_transition(d) {
-//
-//   const duration = 1000;
-//   // The amount we need to rotate:
-//   let rotate = -d.angle * 180 / Math.PI;
-//   while (rotate < -180){
-//     rotate += 360;
-//   }
-//
-//   var center = "" + team1_center[0] + "," +  team1_center[1];
-//   diagram1.transition()
-//   .attrTween("transform", function() {
-//           return d3.interpolateString(diagram1.attr("transform"), "rotate(" + rotate + "," + center + ")");
-//         })
-//   .duration(duration);
+//rotates the player diagram
+function rotate_transition(d) {
 
+  const duration = 1000;
+  // The angle we need to rotate to:
+  let rotate_target = -d.angle * 180 / Math.PI;
+
+  //check which team to rotate
+  if (d.team_id === teams[0].team_id) {
+    //rotate team 1
+    current_rotation = diagram1_rotation;
+    diagram_to_rotate = diagram1;
+    numbers_to_rotate = team1_numbers;
+  }
+  else {
+    //rotate team 2
+    current_rotation = diagram2_rotation;
+    diagram_to_rotate = diagram2;
+    numbers_to_rotate = team2_numbers;
+  }
+
+  //minimise rotation
+  if (rotate_target > (current_rotation + 180)) {
+    rotate_target -= 360;
+  }
+  else if (rotate_target < (current_rotation - 180)) {
+    rotate_target += 360;
+  }
+  var center = "" + team1_center[0] + "," +  team1_center[1];
+
+  diagram_to_rotate.transition()
+  .attrTween("transform", function() {
+          return d3.interpolateString(diagram_to_rotate.attr("transform"), "rotate(" + rotate_target + "," + center + ")");
+        })
+  .duration(duration);
 
   // Τransition the labels so they stay upright
-  // team1_numbers.transition()
-  //   .attrTween("transform", function(t) {
-  //           var center = "" + t.cx + "," +  t.cy;
-  //           return d3.interpolateString("rotate(" + -diagram1_rotation + "," + center + ")", "rotate(" + -rotate + "," + center + ")");
-  //           // return d3.interpolateString(diagram1.select("text").attr("transform"), "rotate(" + -rotate + "," + center + ")");
-  //       })
-  //   .duration(duration);
+  numbers_to_rotate.transition()
+  .attrTween("transform", function(t) {
+          var center = "" + t.cx + "," +  t.cy;
+          let text_current_rotation = "rotate(" + (-current_rotation) + "," + center + ")";
+          let text_target_rotation = "rotate(" + -rotate_target + "," + center + ")";
+          return d3.interpolateString(text_current_rotation, text_target_rotation);
+        })
+  .duration(duration);
 
-//
-//   diagram1_rotation = rotate;
-// }
+    //delay update of current position so it doesn"t confuse text rotation
+    setTimeout(function() {
+      if (d.team_id === teams[0].team_id){diagram1_rotation = rotate_target;}
+      else {diagram2_rotation = rotate_target;}
+    }, (duration));
+}
 
 
 //hover function for circles
