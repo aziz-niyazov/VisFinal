@@ -55,6 +55,7 @@ let comparison_box_t2 = comparison_box.append("g")
 
 var comp_player_1;
 var comp_player_2;
+var stat_bar_widths = new Array();
 // var comp_lock = 0;
 
 var team1_numbers;
@@ -421,6 +422,9 @@ function update_comparison(p) {
   let stat_bars = comparison_box_bars.selectAll("rect")
     .data(p.statistics).enter();
 
+
+  console.log(stat_bar_widths);
+
   //check there are players to compare before drawing bars
   if (comp_player_1 !== undefined && comp_player_2 !== undefined){
 
@@ -449,12 +453,23 @@ function update_comparison(p) {
       });
       // .classed("stats_bars", true);
 
-    //stat bars - variable length
-    stat_bars.append("rect")
+    //stat bars - create with previous length
+    let moving_bars = stat_bars.append("rect")
       .attr("x", pad * 0.8)
       .attr("y", function(d,i){return ((i * px_per_line) + (px_per_line * 0.75));})
+      .attr("width", function(d,i){return stat_bar_widths[i];})
+      .attr("height", px_per_line / 3)
+      .style("fill", function(d){
+        if (!isNaN(parseFloat(d3.values(d)[0]))){return teams[0].main_colour}
+        else {return "none";}
+      });
+    //clear old stat_bar_widths
+    stat_bar_widths = [];
+
+    moving_bars.transition()
       .attr("width", function(d,i){ // get width by comparing with other players stats
         if (isNaN(parseFloat(d3.values(d)[0]))){
+          stat_bar_widths.push(0);
           return 0; //if not a numeric stat, return 0 - wont be shown
         }
         else { // if numeric stat, calculate proportion of width needed
@@ -467,14 +482,15 @@ function update_comparison(p) {
           else {
             factor = p1_val / (p1_val + p2_val);
           }
-          return factor * (cb_width - (pad*1.6));
+          let width = factor * (cb_width - (pad*1.6));
+          //save old Length
+          stat_bar_widths.push(width);
+
+          return width;
         }
       })
-      .attr("height", px_per_line / 3)
-      .style("fill", function(d){
-        if (!isNaN(parseFloat(d3.values(d)[0]))){return teams[0].main_colour}
-        else {return "none";}
-      });
+      .duration(1000);
+
   }
 
   //labels
