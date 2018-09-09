@@ -14,7 +14,6 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-
 }
 
 
@@ -31,9 +30,7 @@ rect.title_right {
   y:0%;
 }
 rect.score_separator {
-  /* fill:#ffee3d; */
   fill:#444;
-  /* opacity:0.5; */
   stroke:black;
   stroke_width:3;
   rx:1%;
@@ -50,7 +47,6 @@ text.title_text{
 }
 
 text.score_number {
-  /* y:2%; */
   fill:#fff;
   font-size: 200%;
   padding-top: 0;
@@ -129,7 +125,6 @@ rect.link_label_bg{
 
     x:0;
     y:0;
-  	/* fill: #555; */
   	fill:none;
     stroke-width: 1;
   	stroke: #fff;
@@ -210,9 +205,10 @@ a {
 }
 #data-source-link {
   position:absolute;
-  left:40%;
+  /* left:40%; */
+  right:0;
   bottom:0px;
-  font-size: 10px;
+  font-size: 7px;
   color:#999;
   text-align:center;
 }

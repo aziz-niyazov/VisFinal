@@ -135,8 +135,6 @@ let pitch_img = pitch_container.append("image")
   .attr('xlink:href', 'pitch.png')
   .attr("width",pitch_width)
   .attr("height", pitch_height)
-  // .attr("rx", "40px")
-  // .attr("ry", "40px")
 let pitch_team1 = pitch_container.append("g");
 let pitch_team2 = pitch_container.append("g");
 
@@ -262,6 +260,7 @@ d3.json("lineups_7298.json")
 		}
 	}
 
+
   //TODO check that player json loaded successfully
 })
 
@@ -284,12 +283,16 @@ d3.json("data.json")
     return (e.team.id === players[1][0].team_id);
   });
 
-  //allocate each event to the relevant player
-  allocateEvents(players[0], team1_events);
-  allocateEvents(players[1], team2_events);
+
 
   get_position(players[0], data[0].tactics.lineup)
   get_position(players[1], data[1].tactics.lineup)
+  players[0] = sort_by_position(players[0]);
+  players[1] = sort_by_position(players[1]);
+
+  //allocate each event to the relevant player
+  allocateEvents(players[0], team1_events);
+  allocateEvents(players[1], team2_events);
 
   //calculate links between each player, within each team
   calculatePlayerLinks(players[0]);
@@ -452,8 +455,7 @@ function renderDiagrams(players){
     .attr('stroke-width', (d) => {return d.stroke_width})
     .attr("class", "pass_line")
     .attr('d', (d) => { return radialLineGenerator(d.link_points)})
-    .on("mouseover", link_hover)
-    .on("mouseout", link_mouseout);
+    .on("mouseover", link_hover);
 
   team2_lines.selectAll('path')
   .data(team2links)
@@ -461,8 +463,7 @@ function renderDiagrams(players){
     .attr('stroke-width', (d) => {return d.stroke_width})
     .attr("class", "pass_line")
     .attr('d', (d) => { return radialLineGenerator(d.link_points)})
-    .on("mouseover", link_hover)
-    .on("mouseout", link_mouseout);
+    .on("mouseover", link_hover);
 
   //render circles:
   let team1_enter = team1_circles.selectAll("circle")
@@ -616,6 +617,23 @@ function calc_pitch_positions(players){
     }
   }
 
+}
+
+//sort a list of players by their position
+function sort_by_position(playerList){
+  let sorted_players = new Array();
+  let positions_list = ["Goalkeeper", "Left Back", "Left Center Back", "Center Back", "Right Center Back", "Right Back",
+   "Left Midfield", "Left Center Midfield", "Center Midfield", "Right Center Midfield", "Right Midfield", "Left Wing",
+   "Left Center Forward", "Center Forward", "Right Center Forward", "Right Wing", "(Substitute)"];
+
+   for (var i = 0; i < positions_list.length; i++) {
+     for (var j = 0; j < playerList.length; j++) {
+       if(playerList[j].position === positions_list[i]){
+         sorted_players.push(playerList[j]);
+       }
+     }
+   }
+   return sorted_players;
 }
 
 function on_node_click(d){
@@ -958,12 +976,6 @@ function link_hover(d) {
   }
 }
 
-//removes pass number label - bit flashy
-function link_mouseout(d){
-    // slot1.selectAll(".link_label").remove();
-    // slot2.selectAll(".link_label").remove();
-}
-
 //for each data point calculate position for center of circle
 //take center point and angle derived from number of nodes
 function radialLayout (data, center_point, radius){
@@ -992,7 +1004,7 @@ function createLinkArray (players, radius) {
     if (players[i].id == 4636) {
       console.log(players[i].links);
     }
-  // for (var i = 0; i < 1; i++) {
+
     //for each link with another player that is not already calculated (only players for now)
     for (var j = i + 1; j < players[i].links.length - 3; j++) {
 
@@ -1016,7 +1028,6 @@ function createLinkArray (players, radius) {
 
         link.link_points = link_points;
         link.stroke_width = get_line_thickness(radius / 10, strength);
-
 
         //add associated players to link info
         let player_ids = new Array();
