@@ -12,6 +12,12 @@ let svgContainer = d3.select("body").append("svg")
   .attr("id", "main_svg");
 
 
+//explanation
+svgContainer.append("text")
+  .attr("x",svg_width*0.5)
+  .attr("y",svg_height*0.18)
+  .classed("exp_text", true)
+  .text("Passing Relationship Diagram for this football match. Lines between players represent the passes they made.")
 
 
 //draw comparison box
@@ -39,6 +45,11 @@ let comparison_box_t2 = comparison_box.append("g")
   .attr("transform", "translate(" + cb_width / 2 + ",0)");
 // linking lines
 let comparison_box_links = svgContainer.append("g");
+
+comparison_box_t1.append("text").text("Click on a player to compare")
+.attr("x",cb_width / 2)
+.attr("y", cb_height / 2)
+.classed("comp_box_title", true);
 comparison_box_links.append("line")
   .attr("x1", team1_center[0])
   .attr("y1", team1_center[1] - radius - node_r)
@@ -119,7 +130,7 @@ card2.append("rect")
 let pitch_width = svg_width*0.2;
 let pitch_height = pitch_width * 0.63475;
 let pitch_container = svgContainer.append("g")
-  .attr("transform", "translate(" + svg_width*0.4 + "," + svg_height*0.73 + ")");
+  .attr("transform", "translate(" + ((svg_width/2)-(pitch_width/2)) + "," + svg_height*0.73 + ")");
 let pitch_img = pitch_container.append("image")
   .attr('xlink:href', 'pitch.png')
   .attr("width",pitch_width)
@@ -135,9 +146,11 @@ var teams = [{},{}]
 //set team colours manually
 teams[0].main_colour = "#82c6ff";
 teams[0].secondary_colour = "#ffffff";
-teams[1].main_colour = "#1328b2";
+teams[0].sub_colour = "#3d5d77";
+teams[1].main_colour = "#3156f9";
 teams[1].secondary_colour = "#ffffff";
-let gk_colour = "red";
+teams[1].sub_colour = "#132266";
+let gk_colour = "#349b5b";
 
 //load match data to get team names and score
 d3.json("matchdata_37.json")
@@ -150,19 +163,64 @@ d3.json("matchdata_37.json")
     teams[1].team_id = match_data.away_team.away_team_id;
     teams[1].team_name = match_data.away_team.away_team_name;
 
-    //draw title with team names
-    let title_bar = d3.select("body").insert("div", ":first-child")
-      .attr("id", "titlebar");
-    let home_title = title_bar.append("div").attr("class", "title left")
-      .style("background-color", teams[0].main_colour);
-    let away_title = title_bar.append("div").attr("class", "title right")
-      .style("background-color", teams[1].main_colour);
-    home_title.append("h1").text(match_data.home_team.home_team_name);
-    away_title.append("h1").text(match_data.away_team.away_team_name);
-    home_title.append("h1").text(match_data.home_score)
-      .attr("class", "score_number");
-    away_title.append("h1").text(match_data.away_score)
-      .attr("class", "score_number");
+
+    let title_bar_svg = svgContainer.append("g");
+    title_bar_svg.append("rect")
+      .classed("title", true)
+      .classed("title_left", true)
+      .style("fill", teams[0].main_colour);
+    title_bar_svg.append("rect")
+      .classed("title", true)
+      .classed("title_right", true)
+      .style("fill", teams[1].main_colour);
+
+    title_bar_svg.append("rect")
+      .classed("score_separator", true);
+
+    title_bar_svg.append("circle")
+      .attr("cx", svg_width*0.5)
+      .attr("cy", svg_height*0.07)
+      .attr("r", svg_height*0.05)
+      .attr("class", "title_circle");
+    title_bar_svg.append("text")
+      .attr("x", svg_width*0.5)
+      .attr("y", svg_height*0.085)
+      .text("vs")
+      .classed("title_circle_text", true);
+
+    title_bar_svg.append("text")
+      .attr("x", svg_width*0.45)
+      .attr("y", svg_height*0.12)
+      .attr("text-anchor", "end")
+      .text(teams[0].team_name)
+      .classed("title_text", true);
+
+    title_bar_svg.append("text")
+      .attr("x", svg_width*0.55)
+      .attr("y", svg_height*0.12)
+      .attr("text-anchor", "start")
+      .text(teams[1].team_name)
+      .classed("title_text", true);
+      // .classed("title_text_right", true);
+
+    //scores
+    title_bar_svg.append("text")
+      .attr("x", svg_width*0.45)
+      .attr("y", svg_height*0.055)
+      .attr("text-anchor", "end")
+      .text(match_data.home_score)
+      .classed("title_text", true)
+      .classed("score_number", true);
+
+    title_bar_svg.append("text")
+      .attr("x", svg_width*0.55)
+      .attr("y", svg_height*0.055)
+      .attr("text-anchor", "start")
+      .text(match_data.away_score)
+      .classed("title_text", true)
+      .classed("score_number", true);
+
+
 
     // let subtitle_bar = d3.select("body").insert("div", "#titlebar + *")
     //   .attr("class", "subtitle");
@@ -414,11 +472,12 @@ function renderDiagrams(players){
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
-    .style("fill", teams[0].main_colour)
-    .style("stroke", (d) => {
+    .style("fill", (d) => {
       if (d.position === "Goalkeeper") {return gk_colour}
-      else {return teams[0].secondary_colour};
+      else if (d.position === "(Substitute)"){return teams[0].sub_colour;}
+      else {return teams[0].main_colour};
     })
+    .style("stroke", teams[0].secondary_colour)
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
     .on("click", on_node_click);
@@ -436,11 +495,12 @@ function renderDiagrams(players){
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
-    .style("fill", teams[1].main_colour)
-    .style("stroke", (d) => {
+    .style("fill", (d) => {
       if (d.position === "Goalkeeper") {return gk_colour}
-      else {return teams[1].secondary_colour};
+      else if (d.position === "(Substitute)"){return teams[1].sub_colour;}
+      else {return teams[1].main_colour};
     })
+    .style("stroke", teams[1].secondary_colour)
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
     .on("click", on_node_click);
@@ -469,11 +529,12 @@ function add_pitch_players(players){
     .attr("cx", (d) => {return d.pitch_x;})
     .attr("cy", (d) => {return d.pitch_y;})
     .attr("r", node_r*0.5)
-    .style("fill", teams[0].main_colour)
-    .style("stroke", (d) => {
+    .style("fill", (d) => {
       if (d.position === "Goalkeeper") {return gk_colour}
-      else {return teams[0].secondary_colour};
+      else if (d.position === "(Substitute)"){return teams[0].sub_colour;}
+      else {return teams[0].main_colour};
     })
+    .style("stroke", teams[0].secondary_colour)
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
     .on("click", on_node_click);
@@ -491,11 +552,12 @@ function add_pitch_players(players){
     .attr("cx", (d) => {return d.pitch_x;})
     .attr("cy", (d) => {return d.pitch_y;})
     .attr("r", node_r*0.5)
-    .style("fill", teams[1].main_colour)
-    .style("stroke", (d) => {
+    .style("fill", (d) => {
       if (d.position === "Goalkeeper") {return gk_colour}
-      else {return teams[0].secondary_colour};
+      else if (d.position === "(Substitute)"){return teams[1].sub_colour;}
+      else {return teams[1].main_colour};
     })
+    .style("stroke", teams[1].secondary_colour)
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
     .on("click", on_node_click);
@@ -513,7 +575,6 @@ function calc_pitch_positions(players){
   let sub_count = 0;
   for (var i = 0; i < players.length; i++) {
     p = players[i];
-    console.log(p.position);
     if (p.position.includes("Goalkeeper")) {
       p.pitch_x = pitch_width * 0.05;
       p.pitch_y = pitch_height * 0.5;
@@ -523,8 +584,8 @@ function calc_pitch_positions(players){
       if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
       else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
       else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
-      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.8;}
-      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.2;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
     }
     else if (p.position.includes("Midfield")) {
       p.pitch_x = pitch_width * 0.27;
@@ -543,13 +604,15 @@ function calc_pitch_positions(players){
       else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.27;}
     }
     else if (p.position.includes("Substitute")){
-      p.pitch_y = 0;
-      p.pitch_x = pitch_width * (sub_count++ * 0.07);
+      p.pitch_y = pitch_height * (sub_count++ * 0.14);
+      p.pitch_x = pitch_width * -0.06;
     }
     //switch positions for away team
     if (p.team_id === teams[1].team_id) {
       p.pitch_x = pitch_width - p.pitch_x;
-      p.pitch_y = pitch_height - p.pitch_y;
+      if(!p.position.includes("Substitute")){
+        p.pitch_y = pitch_height - p.pitch_y;
+      }
     }
   }
 
@@ -783,16 +846,19 @@ function mouseovered(d) {
 
   //update player info card
   var card;
+  var img_name;
   if (d.team_id === players[0][0].team_id) {
     card = card1;
+    img_name = 'team1.png';
   }
   else {
     card = card2;
+    img_name = 'team2.png';
   }
 
   //select existing rectangle that has been drawn in render
   card.select("rect")
-    .style("fill","#555")
+    .style("fill","#444")
     .style("stroke", "#fff")
 
   //add labels
@@ -834,11 +900,12 @@ function mouseovered(d) {
 
   card.selectAll("image").remove();
   let card_player_img = card.append("image")
-        .attr('xlink:href', 'player_icon.png')
-        .attr("x", 0)
+        .attr('xlink:href', img_name)
+        .attr("x", svg_height * 0.005)
         .attr("y", svg_height * 0.01)
-        .attr('width', card_width * 0.4)
+        .attr('width', card_width * 0.36)
         .attr('height', svg_height * 0.15)
+
 }
 
 function mouseout(d){
@@ -921,9 +988,14 @@ function createLinkArray (players, radius) {
 
   //for each player
   for (var i = 0; i < players.length; i++) {
+
+    if (players[i].id == 4636) {
+      console.log(players[i].links);
+    }
   // for (var i = 0; i < 1; i++) {
     //for each link with another player that is not already calculated (only players for now)
     for (var j = i + 1; j < players[i].links.length - 3; j++) {
+
         let link = new Object();
         link.highlighted = false;
         link.team_id = players[i].team_id;
@@ -932,37 +1004,53 @@ function createLinkArray (players, radius) {
         let strength = players[i].links[j].npasses + players[j].links[i].npasses;
         link.strength = strength;
 
-        let LOWER_LIMIT = 2; //min strength needed before showing link
-        if (strength > LOWER_LIMIT){
+        //create an array describing the link points,
+        //each element contains [angle, distance from center]
+        let link_points = new Array();
+        //start
+        link_points.push([players[i].angle,radius]);
+        //midpoint
+        link_points.push(getMidpointPosition(players[i].angle, players[j].angle, angleStep, radius));
+        //end
+        link_points.push([players[j].angle, radius]);
 
-          //create an array describing the link points,
-          //each element contains [angle, distance from center]
-          let link_points = new Array();
-          //start
-          link_points.push([players[i].angle,radius]);
-          //midpoint
-          link_points.push(getMidpointPosition(players[i].angle, players[j].angle, angleStep, radius));
-          //end
-          link_points.push([players[j].angle, radius]);
-
-          link.link_points = link_points;
-          link.stroke_width = strength * (radius / 300);
+        link.link_points = link_points;
+        link.stroke_width = get_line_thickness(radius / 10, strength);
 
 
-          //add associated players to link info
-          let player_ids = new Array();
-          player_ids.push(players[i].id);
-          if (j < players.length) {
-            player_ids.push(players[j].id);
-          }
-          link.player_ids = player_ids;
-
-          linkData.push(link);
+        //add associated players to link info
+        let player_ids = new Array();
+        player_ids.push(players[i].id);
+        if (j < players.length) {
+          player_ids.push(players[j].id);
         }
+        link.player_ids = player_ids;
+
+        linkData.push(link);
     }
   }
-  // console.log(linkData);
+
   return linkData;
+}
+function get_line_thickness(max_thickness, strength){
+  const UPPER_BOUND = 20.0;
+  const NUM_THICKNESSES = 4.0;
+  if (strength >= UPPER_BOUND) {
+    return max_thickness;
+  }
+  else if (strength == 0) {
+    return 0;
+  }
+  else {
+    let s = strength * ((NUM_THICKNESSES)/UPPER_BOUND);
+    s = Math.floor(s);
+    s = s / NUM_THICKNESSES;
+
+    if (strength > 0 && s == 0) {
+      return 1;
+    }
+    return max_thickness * s;
+  }
 }
 
 //calculates midpoint position of a radial line, given two points
