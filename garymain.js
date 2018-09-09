@@ -1,7 +1,7 @@
 //visual setup
 //create svg container
 const svg_width = window.innerWidth;
-const svg_height = window.innerHeight;
+const svg_height = window.innerHeight-4;
 const team1_center = [svg_width/6,svg_height*0.5];
 const team2_center = [svg_width*(5/6),svg_height*0.5];
 const radius = Math.min(svg_width / 7, svg_height / 4);
@@ -838,8 +838,29 @@ function mouseovered(d) {
           .attr("y", svg_height * 0.01)
           .attr('width', card_width * 0.4)
           .attr('height', svg_height * 0.15)
+}
 
+function mouseout(d){
+  var team;
+  var card;
 
+  if (d.team_id === players[0][0].team_id) {
+    lines_to_change = team1_lines;
+    team = 1;
+  }
+  else {
+    lines_to_change = team2_lines;
+    team = 2;
+  }
+
+  if (team === 1) {card = card1;}
+  else {card = card2;}
+
+  card.select("rect")
+      .style("fill","none")
+      .style("stroke", "#474a4f")
+  card.selectAll(".card_text").remove();
+  card.selectAll("image").remove();
 }
 
 //show a label when a highlighted link is hovered over
