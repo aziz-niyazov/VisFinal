@@ -2,6 +2,9 @@ body {
     background-color: #1e1f21;
     margin:0;
     height:100%;
+
+    fill:#fff;
+    font-family: Verdana, Geneva, sans-serif;
 }
 
 .unselectable {
@@ -15,32 +18,62 @@ body {
 }
 
 
-.title {
-  color: white;
-  font-size: 60%;
-  font-family: Verdana, Geneva, sans-serif;
+rect.title {
   height: 14%;
-  width: 49%;
-  position: fixed;
-  line-height: 100%;
+  width: 50%;
+}
+rect.title_left {
+  x:0;
+  y:0;
+}
+rect.title_right {
+  x:50%;
+  y:0%;
+}
+rect.score_separator {
+  /* fill:#ffee3d; */
+  fill:#444;
+  /* opacity:0.5; */
+  stroke:black;
+  stroke_width:3;
+  rx:1%;
+  ry:1%;
+  x:41%;
+  y:-5%;
+  width:18%;
+  height: 12%;
+}
+text.title_text{
+  fill:#fff;
+  font-size: 150%;
+  font-family: Verdana, Geneva, sans-serif;
+}
 
-}
-.left {
-  left: 0;
-  text-align: right;
-  padding-right: 1%;
-}
-.right {
-  right: 0;
-  text-align: left;
-  padding-left: 1%;
-}
-
-.score_number {
-  font-size: 500%;
+text.score_number {
+  /* y:2%; */
+  fill:#fff;
+  font-size: 200%;
   padding-top: 0;
 }
 
+text.title_circle_text{
+  fill:white;
+  font-family: Verdana, Geneva, sans-serif;
+  text-anchor:middle;
+  font-size: 200%;
+}
+
+circle.title_circle{
+  fill:#1e1f21;
+  stroke:white;
+}
+
+
+text.exp_text{
+  fill:#999;
+  text-anchor:middle;
+  font-size: 80%;
+}
 
 text.jersey_numbers {
   font-size: 20px;
@@ -96,11 +129,12 @@ rect.link_label_bg{
 
     x:0;
     y:0;
-  	fill: #555;
+  	/* fill: #555; */
+  	fill:none;
     stroke-width: 1;
   	stroke: #fff;
-    rx:20;
-    ry:20;
+    rx:5;
+    ry:5;
 
 }
 #comparison_box_midline{
@@ -111,58 +145,27 @@ rect.link_label_bg{
 
 .compline{
   /* y:0; */
-  stroke:#ff9823;
+  stroke:#f1d647;
   stroke-width:2;
   stroke-opacity: 0.7;
 
 
 }
 .compcircle{
-  fill:#ff9823;
+  /* fill:#ffb460; */
+    fill:#f1d647;
   r:2.5%;
   stroke:none;
   opacity: 1.0;
 }
 .compcircle_small{
-  fill:#ff9823;
+  fill:#f1d647;
   r:1.5%;
   stroke:none;
   opacity: 1.0;
 }
-/* line#s_compline0 {
 
-  x1:0px;
-  y1:0px;
-  x2:1000px;
-  y2:1000px;
-  stroke:white;
-  stroke_width:2;
 
-    /* y:0; */
-} */
-
-.lock_btn{
-  opacity: 0.7;
-  rx:5;
-  ry:5;
-  width:5.8%;
-  height:2.6%;
-  y:0.5%;
-}
-rect.btn_l{
-  x:9%;
-}
-rect.btn_r{
-  x:15.3%;
-}
-rect.lock_btn_lock{
-  fill:green;
-  stroke:#292;
-}
-rect.lock_btn_unlock{
-  fill:red;
-  stroke:#922;
-}
 
 
 text.stats {
@@ -185,8 +188,8 @@ rect.player_card{
   y:0;
   height:17%;
   fill:none;
-  rx:10px;
-  ry:10px;
+  rx:5px;
+  ry:5px;
   stroke:#474a4f;
 }
 
@@ -200,4 +203,16 @@ text.card_text{
 text.card_field{
   fill:#fff;
   font-family: Verdana, Geneva, sans-serif;
+}
+
+a {
+  color:#999;
+}
+#data-source-link {
+  position:absolute;
+  left:40%;
+  bottom:0px;
+  font-size: 10px;
+  color:#999;
+  text-align:center;
 }
