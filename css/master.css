@@ -48,6 +48,7 @@ text.jersey_numbers {
   font:impact;
   pointer-events: none;
   fill:white;
+  text-anchor:middle;
 
 }
 
@@ -67,6 +68,24 @@ circle {
   stroke: #fff
 }
 
+text.link_label{
+  fill:white;
+  text-anchor:middle;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size:80%;
+}
+
+rect.link_label_bg{
+  fill:black;
+  opacity:0.7;
+  x:11.7%;
+  y:46.5%;
+  width:10%;
+  height:5%;
+  rx:10;
+  ry:10;
+}
+
 .comp_box_title{
   fill:white;
   text-anchor:middle;
@@ -75,10 +94,52 @@ circle {
 
 #comparison_box {
 
+    x:0;
+    y:0;
   	fill: #555;
     stroke-width: 1;
   	stroke: #fff;
+    rx:20;
+    ry:20;
+
 }
+#comparison_box_midline{
+  y:0;
+  stroke:white;
+  stroke_width:2;
+}
+
+.compline{
+  /* y:0; */
+  stroke:#ff9823;
+  stroke-width:2;
+  stroke-opacity: 0.7;
+
+
+}
+.compcircle{
+  fill:#ff9823;
+  r:2.5%;
+  stroke:none;
+  opacity: 1.0;
+}
+.compcircle_small{
+  fill:#ff9823;
+  r:1.5%;
+  stroke:none;
+  opacity: 1.0;
+}
+/* line#s_compline0 {
+
+  x1:0px;
+  y1:0px;
+  x2:1000px;
+  y2:1000px;
+  stroke:white;
+  stroke_width:2;
+
+    /* y:0; */
+} */
 
 .lock_btn{
   opacity: 0.7;
@@ -118,12 +179,6 @@ text.sl{
 text.sr{
   text-anchor:end;
 }
-
-/* rect.stats_bars_l{
-
-}
-rect.stats_bars_l{
-} */
 
 rect.player_card{
 

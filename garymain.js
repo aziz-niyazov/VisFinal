@@ -3,6 +3,7 @@
 const svg_width = window.innerWidth;
 const svg_height = window.innerHeight-4;
 const team1_center = [svg_width/6,svg_height*0.5];
+const team2_center = [svg_width*(5/6),svg_height*0.5];
 const radius = Math.min(svg_width / 7, svg_height / 4);
 const node_r = svg_width / 60; //circle radius
 let svgContainer = d3.select("body").append("svg")
@@ -11,19 +12,7 @@ let svgContainer = d3.select("body").append("svg")
   .attr("id", "main_svg");
 
 
-//create element groups
-let diagram1 = svgContainer.append("g");
-  // .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
-let diagram2 = svgContainer.append("g")
-  .attr("transform", "translate(" + svg_width * 2 / 3 + ",0)");
 
-let team1_lines = diagram1.append("g")
-  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
-let team2_lines = diagram2.append("g")
-  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
-
-let team1_circles = diagram1.append("g");
-let team2_circles = diagram2.append("g");
 
 //draw comparison box
 let comparison_box = svgContainer.append("g")
@@ -35,34 +24,78 @@ comparison_box.append("text").text("Comparison")
   .attr("y", -cb_height / 30)
   .classed("comp_box_title", true);
 comparison_box.append("rect")
-  .attr("x", 0)
-  .attr("y", 0)
   .attr("width", cb_width)
   .attr("height", cb_height)
-  .attr("rx", 20)
-  .attr("ry", 20)
   .attr("id", "comparison_box");
 comparison_box.append("line")
   .attr("x1", cb_width / 2)
-  .attr("y1", 0)
   .attr("x2", cb_width / 2)
   .attr("y2", cb_height)
-  .style("stroke", "white")
-  .style("stroke_width", 2);
+  // .classed("compline", true)
+  .attr("id", "comparison_box_midline");
 let comparison_box_bars = comparison_box.append("g");
 let comparison_box_t1 = comparison_box.append("g");
 let comparison_box_t2 = comparison_box.append("g")
   .attr("transform", "translate(" + cb_width / 2 + ",0)");
+// linking lines
+let comparison_box_links = svgContainer.append("g");
+comparison_box_links.append("line")
+  .attr("x1", team1_center[0])
+  .attr("y1", team1_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.4)
+  .attr("y2", team1_center[1] - radius-node_r)
+comparison_box_links.append("line")
+  .attr("x1", team2_center[0])
+  .attr("y1", team2_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.6)
+  .attr("y2", team2_center[1] - radius-node_r)
+comparison_box_links.append("line")
+  .attr("x1", svg_width * 0.4)
+  .attr("y1", team1_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.4)
+  .attr("y2", svg_height*0.3)
+comparison_box_links.append("line")
+  .attr("x1", svg_width * 0.6)
+  .attr("y1", team2_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.6)
+  .attr("y2", svg_height*0.3)
+comparison_box_links.append("circle")
+  .attr("cx", team1_center[0])
+  .attr("cy", team1_center[1] - radius)
+comparison_box_links.append("circle")
+  .attr("cx", team2_center[0])
+  .attr("cy", team2_center[1] - radius)
+comparison_box_links.selectAll("line").classed("compline", true);
+comparison_box_links.selectAll("circle").classed("compcircle", true);
+
+
+//create element groups
+let slot1 = svgContainer.append("g");
+let slot2 = svgContainer.append("g")
+  .attr("transform", "translate(" + svg_width * 2 / 3 + ",0)");
+
+let diagram1 = slot1.append("g")
+  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
+let diagram2 = slot2.append("g")
+  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
+
+let team1_lines = diagram1.append("g")
+  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
+let team2_lines = diagram2.append("g")
+  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
+
+let team1_circles = diagram1.append("g");
+let team2_circles = diagram2.append("g");
 
 var comp_player_1;
 var comp_player_2;
-var comp_lock = 0;
+var stat_bar_widths = new Array();
 
 var team1_numbers;
 var team2_numbers;
 
-let diagram1_rotation = 0;
-let diagram2_rotation = 0;
+var diagram1_rotation = 0;
+var diagram2_rotation = 0;
 
 
 //creating a rectangle
@@ -81,6 +114,21 @@ card2.append("rect")
   .classed("player_card", true)
   .attr("width", card_width);
 
+
+//draw the pitch
+let pitch_width = svg_width*0.2;
+let pitch_height = pitch_width * 0.63475;
+let pitch_container = svgContainer.append("g")
+  .attr("transform", "translate(" + svg_width*0.4 + "," + svg_height*0.73 + ")");
+let pitch_img = pitch_container.append("image")
+  .attr('xlink:href', 'pitch.png')
+  .attr("width",pitch_width)
+  .attr("height", pitch_height)
+  // .attr("rx", "40px")
+  // .attr("ry", "40px")
+let pitch_team1 = pitch_container.append("g");
+let pitch_team2 = pitch_container.append("g");
+
 var players = [[],[]]
 var teams = [{},{}]
 
@@ -89,6 +137,7 @@ teams[0].main_colour = "#82c6ff";
 teams[0].secondary_colour = "#ffffff";
 teams[1].main_colour = "#1328b2";
 teams[1].secondary_colour = "#ffffff";
+let gk_colour = "red";
 
 //load match data to get team names and score
 d3.json("matchdata_37.json")
@@ -101,6 +150,7 @@ d3.json("matchdata_37.json")
     teams[1].team_id = match_data.away_team.away_team_id;
     teams[1].team_name = match_data.away_team.away_team_name;
 
+    //draw title with team names
     let title_bar = d3.select("body").insert("div", ":first-child")
       .attr("id", "titlebar");
     let home_title = title_bar.append("div").attr("class", "title left")
@@ -136,11 +186,9 @@ d3.json("lineups_7298.json")
 			p.name = lineups[i].lineup[j].player_name
       p.position = "(Substitute)";
 			p.jersey_number = lineups[i].lineup[j].jersey_number
-
 			p.country = new Object()
 			p.country.id = lineups[i].lineup[j].country.id
 			p.country.name = lineups[i].lineup[j].country.name
-
 			p.team_id = lineups[i].team_id
 			p.team_name = lineups[i].team_name
 
@@ -164,7 +212,6 @@ d3.json("lineups_7298.json")
 d3.json("data.json")
   .then(function(data){
 
-  console.log(data);
 
   //filter to only passes and shots
   var useful_events = data.filter(e => {
@@ -195,11 +242,11 @@ d3.json("data.json")
 
   renderDiagrams(players);
 
-
-  console.log(players);
-
+  //draw players on pitch
+  add_pitch_players(players);
 })
 
+//gets positions of each player from the main data JSON
 function get_position(playerList,lineupList) {
   for(var i = 0; i<lineupList.length; i++){
     for(var j = 0; j<playerList.length; j++){
@@ -339,20 +386,25 @@ function renderDiagrams(players){
   team1links = createLinkArray(players[0], radius);
   team2links = createLinkArray(players[1], radius);
 
+
   //render lines
   team1_lines.selectAll('path')
   .data(team1links)
   .enter().append("path")
     .attr('stroke-width', (d) => {return d.stroke_width})
     .attr("class", "pass_line")
-    .attr('d', (d) => { return radialLineGenerator(d.link_points)});
+    .attr('d', (d) => { return radialLineGenerator(d.link_points)})
+    .on("mouseover", link_hover)
+    .on("mouseout", link_mouseout);
 
   team2_lines.selectAll('path')
   .data(team2links)
   .enter().append("path")
     .attr('stroke-width', (d) => {return d.stroke_width})
     .attr("class", "pass_line")
-    .attr('d', (d) => { return radialLineGenerator(d.link_points)});
+    .attr('d', (d) => { return radialLineGenerator(d.link_points)})
+    .on("mouseover", link_hover)
+    .on("mouseout", link_mouseout);
 
   //render circles:
   let team1_enter = team1_circles.selectAll("circle")
@@ -363,38 +415,151 @@ function renderDiagrams(players){
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
     .style("fill", teams[0].main_colour)
-    .style("stroke", teams[0].secondary_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[0].secondary_colour};
+    })
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
-    .on("click", update_comparison);
-    // .on("click", rotate_transition);
+    .on("click", on_node_click);
   //numbers
   team1_numbers = team1_enter.append("text")
-    .attr("x", (d) => {return d.cx - node_r/2;})
+    .attr("x", (d) => {return d.cx;})
     .attr("y", (d) => {return d.cy + node_r/3;})
     .style("font-size", node_r)
     .text((d) => {return d.jersey_number})
     .classed("jersey_numbers", true);
 
   let team2_enter = team2_circles.selectAll("circle")
-  .data(team2_nodes).enter()
+  .data(team2_nodes).enter();
   team2_enter.append("circle")
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
     .style("fill", teams[1].main_colour)
-    .style("stroke", teams[1].secondary_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[1].secondary_colour};
+    })
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
-    .on("click", update_comparison);
+    .on("click", on_node_click);
   //numbers
-  team2_enter.append("text")
-    .attr("x", (d) => {return d.cx - node_r/2;})
+  team2_numbers = team2_enter.append("text")
+    .attr("x", (d) => {return d.cx;})
     .attr("y", (d) => {return d.cy + node_r/3;})
     .style("font-size", node_r)
     .text((d) => {return d.jersey_number})
     .classed("jersey_numbers", true);
 
+
+}
+
+//renders a circle and number for each player in the pitch section
+function add_pitch_players(players){
+
+  calc_pitch_positions(players[0]);
+  calc_pitch_positions(players[1]);
+
+
+
+  let pitch_team1_enter = pitch_team1.selectAll("circle")
+  .data(players[0]).enter();
+  pitch_team1_enter.append("circle")
+    .attr("cx", (d) => {return d.pitch_x;})
+    .attr("cy", (d) => {return d.pitch_y;})
+    .attr("r", node_r*0.5)
+    .style("fill", teams[0].main_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[0].secondary_colour};
+    })
+    .on("mouseover", mouseovered)
+    .on("mouseout", mouseout)
+    .on("click", on_node_click);
+  pitch_team1_enter.append("text")
+    .attr("x", (d) => {return d.pitch_x;})
+    .attr("y", (d) => {return d.pitch_y + node_r/6;})
+    .style("font-size", node_r*0.5)
+    .text((d) => {return d.jersey_number})
+    .classed("jersey_numbers", true);
+
+
+  let pitch_team2_enter = pitch_team2.selectAll("circle")
+  .data(players[1]).enter();
+  pitch_team2_enter.append("circle")
+    .attr("cx", (d) => {return d.pitch_x;})
+    .attr("cy", (d) => {return d.pitch_y;})
+    .attr("r", node_r*0.5)
+    .style("fill", teams[1].main_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[0].secondary_colour};
+    })
+    .on("mouseover", mouseovered)
+    .on("mouseout", mouseout)
+    .on("click", on_node_click);
+
+  pitch_team2_enter.append("text")
+    .attr("x", (d) => {return d.pitch_x;})
+    .attr("y", (d) => {return d.pitch_y + node_r/6;})
+    .style("font-size", node_r*0.5)
+    .text((d) => {return d.jersey_number})
+    .classed("jersey_numbers", true);
+}
+
+//assigns a pitch position to the player based on their position name
+function calc_pitch_positions(players){
+  let sub_count = 0;
+  for (var i = 0; i < players.length; i++) {
+    p = players[i];
+    console.log(p.position);
+    if (p.position.includes("Goalkeeper")) {
+      p.pitch_x = pitch_width * 0.05;
+      p.pitch_y = pitch_height * 0.5;
+    }
+    else if (p.position.includes("Back")) {
+      p.pitch_x = pitch_width * 0.15;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.8;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.2;}
+    }
+    else if (p.position.includes("Midfield")) {
+      p.pitch_x = pitch_width * 0.27;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
+    }
+    else if (p.position.includes("Forward") || p.position.includes("Wing")) {
+      p.pitch_x = pitch_width * 0.4;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.6;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.4;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.73;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.27;}
+    }
+    else if (p.position.includes("Substitute")){
+      p.pitch_y = 0;
+      p.pitch_x = pitch_width * (sub_count++ * 0.07);
+    }
+    //switch positions for away team
+    if (p.team_id === teams[1].team_id) {
+      p.pitch_x = pitch_width - p.pitch_x;
+      p.pitch_y = pitch_height - p.pitch_y;
+    }
+  }
+
+}
+
+function on_node_click(d){
+  update_comparison(d);
+  rotate_transition(d);
+  draw_pitch_highlight(d);
+  update_link_colours(d);
 }
 
 //show a player in the comparison box
@@ -420,25 +585,11 @@ function update_comparison(p) {
   cp_pane.selectAll("text").remove();
   comparison_box_bars.selectAll("rect").remove();
 
-
   let stat_bars = comparison_box_bars.selectAll("rect")
     .data(p.statistics).enter();
 
   //check there are players to compare before drawing bars
   if (comp_player_1 !== undefined && comp_player_2 !== undefined){
-
-    //draw lock / unlock buttons
-    comparison_box.selectAll(".lock_btn").remove();
-    comparison_box.append("rect")
-      .classed("lock_btn", true)
-      .classed("btn_l", true)
-      .classed("lock_btn_lock", function () {
-
-      });
-    comparison_box.append("rect")
-      .classed("lock_btn", true)
-      .classed("btn_r", true)
-      .classed("lock_btn_unlock", true);
 
     //stat bars - base bars (away team colour)
     stat_bars.append("rect")
@@ -452,12 +603,23 @@ function update_comparison(p) {
       });
       // .classed("stats_bars", true);
 
-    //stat bars - variable length
-    stat_bars.append("rect")
+    //stat bars - create with previous length
+    let moving_bars = stat_bars.append("rect")
       .attr("x", pad * 0.8)
       .attr("y", function(d,i){return ((i * px_per_line) + (px_per_line * 0.75));})
+      .attr("width", function(d,i){return stat_bar_widths[i];})
+      .attr("height", px_per_line / 3)
+      .style("fill", function(d){
+        if (!isNaN(parseFloat(d3.values(d)[0]))){return teams[0].main_colour}
+        else {return "none";}
+      });
+    //clear old stat_bar_widths
+    stat_bar_widths = [];
+
+    moving_bars.transition()
       .attr("width", function(d,i){ // get width by comparing with other players stats
         if (isNaN(parseFloat(d3.values(d)[0]))){
+          stat_bar_widths.push(0);
           return 0; //if not a numeric stat, return 0 - wont be shown
         }
         else { // if numeric stat, calculate proportion of width needed
@@ -470,14 +632,15 @@ function update_comparison(p) {
           else {
             factor = p1_val / (p1_val + p2_val);
           }
-          return factor * (cb_width - (pad*1.6));
+          let width = factor * (cb_width - (pad*1.6));
+          //save old Length
+          stat_bar_widths.push(width);
+
+          return width;
         }
       })
-      .attr("height", px_per_line / 3)
-      .style("fill", function(d){
-        if (!isNaN(parseFloat(d3.values(d)[0]))){return teams[0].main_colour}
-        else {return "none";}
-      });
+      .duration(1000);
+
   }
 
   //labels
@@ -511,45 +674,87 @@ function update_comparison(p) {
 
 }
 
-// function rotate_transition(d) {
-//
-//   const duration = 1000;
-//   // The amount we need to rotate:
-//   let rotate = -d.angle * 180 / Math.PI;
-//   while (rotate < -180){
-//     rotate += 360;
-//   }
-//
-//   var center = "" + team1_center[0] + "," +  team1_center[1];
-//   diagram1.transition()
-//   .attrTween("transform", function() {
-//           return d3.interpolateString(diagram1.attr("transform"), "rotate(" + rotate + "," + center + ")");
-//         })
-//   .duration(duration);
+//rotates the player diagram
+function rotate_transition(d) {
 
+  const duration = 1000;
+  // The angle we need to rotate to:
+  let rotate_target = 360-(d.angle * 180 / Math.PI);
+
+  //check which team to rotate
+  if (d.team_id === teams[0].team_id) {
+    //rotate team 1
+    current_rotation = diagram1_rotation;
+    diagram_to_rotate = diagram1;
+    numbers_to_rotate = team1_numbers;
+  }
+  else {
+    //rotate team 2
+    current_rotation = diagram2_rotation;
+    diagram_to_rotate = diagram2;
+    numbers_to_rotate = team2_numbers;
+  }
+
+  //minimise rotation
+  while (rotate_target > (current_rotation + 180)) {
+    rotate_target -= 360;
+  }
+  while (rotate_target < (current_rotation - 180)) {
+    rotate_target += 360;
+  }
+  var center = "" + team1_center[0] + "," +  team1_center[1];
+
+  diagram_to_rotate.transition()
+  .attrTween("transform", function() {
+          return d3.interpolateString(diagram_to_rotate.attr("transform"), "rotate(" + rotate_target + "," + center + ")");
+        })
+  .duration(duration);
 
   // Τransition the labels so they stay upright
-  // team1_numbers.transition()
-  //   .attrTween("transform", function(t) {
-  //           var center = "" + t.cx + "," +  t.cy;
-  //           return d3.interpolateString("rotate(" + -diagram1_rotation + "," + center + ")", "rotate(" + -rotate + "," + center + ")");
-  //           // return d3.interpolateString(diagram1.select("text").attr("transform"), "rotate(" + -rotate + "," + center + ")");
-  //       })
-  //   .duration(duration);
+  numbers_to_rotate.transition()
+  .attrTween("transform", function(t) {
+          var center = "" + t.cx + "," +  t.cy;
+          let text_current_rotation = "rotate(" + (-current_rotation) + "," + center + ")";
+          let text_target_rotation = "rotate(" + -rotate_target + "," + center + ")";
+          return d3.interpolateString(text_current_rotation, text_target_rotation);
+        })
+  .duration(duration);
 
-//
-//   diagram1_rotation = rotate;
-// }
+    //delay update of current position so it doesn"t confuse text rotation
+    setTimeout(function() {
 
+      if (d.team_id === teams[0].team_id){
+        diagram1_rotation = rotate_target;
+      }
+      else {
+        diagram2_rotation = rotate_target;
+      }
+    }, (duration*1.01));
+}
 
-//hover function for circles
-//highlight lines connected to that player on mouseover
-function mouseovered(d) {
+function draw_pitch_highlight(d){
+  //add highlight circles
+  pitch_team1.selectAll(".compcircle_small").remove();
+  pitch_team2.selectAll(".compcircle_small").remove();
 
+  if (comp_player_1 !== undefined){
+    pitch_team1.insert("circle",":first-child")
+      .attr("cx", () => {return comp_player_1.pitch_x;})
+      .attr("cy", () => {return comp_player_1.pitch_y;})
+      .classed("compcircle_small", true);
+  }
+  if (comp_player_2 !== undefined){
+    pitch_team2.insert("circle",":first-child")
+      .attr("cx", () => {return comp_player_2.pitch_x;})
+      .attr("cy", () => {return comp_player_2.pitch_y;})
+      .classed("compcircle_small", true);
+  }
+}
+
+function update_link_colours(d){
   //highlight lines where that player is the passer
   var lines_to_change;
   var team;
-
   if (d.team_id === players[0][0].team_id) {
     lines_to_change = team1_lines;
     team = 1;
@@ -563,66 +768,77 @@ function mouseovered(d) {
     .classed("pass_line--highlight", function (l) {
       for (let p = 0; p < l.player_ids.length; p++){
         if (l.player_ids[p] === d.id){
+          l.highlighted = true;
           return true;
         }
       }
+      l.highlighted = false;
       return false;
     })
-    //update player info card
-    var card;
-    if (team === 1) {card = card1;}
-    else {card = card2;}
+}
 
+//hover function for circles
+//highlight lines connected to that player on mouseover
+function mouseovered(d) {
 
-    //select existing rectangle that has been drawn in render
-    card.select("rect")
-      .style("fill","#555")
-      .style("stroke", "#fff")
+  //update player info card
+  var card;
+  if (d.team_id === players[0][0].team_id) {
+    card = card1;
+  }
+  else {
+    card = card2;
+  }
 
-    //add labels
-    card.selectAll(".card_text").remove();
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.06)
-          .text("Name: ")
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.18)
-          .text("Country: ")
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.30)
-          .text("Position: ")
-          .classed("card_text", true);
+  //select existing rectangle that has been drawn in render
+  card.select("rect")
+    .style("fill","#555")
+    .style("stroke", "#fff")
 
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.12)
-          .text(d.name)
-          .classed("card_field", true)
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.24)
-          .text(d.country.name)
-          .classed("card_field", true)
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.36)
-          .text(d.position)
-          .classed("card_field", true)
-          .classed("card_text", true);
+  //add labels
+  card.selectAll(".card_text").remove();
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.06)
+        .text("Name: ")
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.18)
+        .text("Country: ")
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.30)
+        .text("Position: ")
+        .classed("card_text", true);
 
-    card.selectAll("image").remove();
-    let card_player_img = card.append("image")
-          .attr('xlink:href', 'player_icon.png')
-          .attr("x", 0)
-          .attr("y", svg_height * 0.01)
-          .attr('width', card_width * 0.4)
-          .attr('height', svg_height * 0.15)
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.12)
+        .text(d.name)
+        .classed("card_field", true)
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.24)
+        .text(d.country.name)
+        .classed("card_field", true)
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.36)
+        .text(d.position)
+        .classed("card_field", true)
+        .classed("card_text", true);
+
+  card.selectAll("image").remove();
+  let card_player_img = card.append("image")
+        .attr('xlink:href', 'player_icon.png')
+        .attr("x", 0)
+        .attr("y", svg_height * 0.01)
+        .attr('width', card_width * 0.4)
+        .attr('height', svg_height * 0.15)
 }
 
 function mouseout(d){
@@ -637,7 +853,7 @@ function mouseout(d){
     lines_to_change = team2_lines;
     team = 2;
   }
-  
+
   if (team === 1) {card = card1;}
   else {card = card2;}
 
@@ -648,15 +864,38 @@ function mouseout(d){
   card.selectAll("image").remove();
 }
 
-// function create_table_data(d){
-//   let table_data = new Array();
-//   table_data.push({label:"Player Name", value:d.name});
-//   table_data.push({label:"Country", value:d.country.name});
-//   table_data.push({label:"Position", value:"unknown"});//TODO transfer to player object in load
-//   table_data.push({label:"Total Passes", value:d.events.length});//TODO not correct - includes shots
-//   return table_data;
-// }
+//show a label when a highlighted link is hovered over
+function link_hover(d) {
+  var slot;
+  if (d.team_id === teams[0].team_id){
+    slot = slot1;
+  }
+  else {
+    slot = slot2;
+  }
 
+  slot.selectAll(".link_label").remove();
+
+  if (d.highlighted) {
+
+    let rect_width = radius;
+    slot.append("rect")
+      .classed("link_label",true)
+      .classed("link_label_bg",true)
+
+    slot.append("text")
+      .classed("link_label",true)
+      .attr("x", team1_center[0])
+      .attr("y", team1_center[1])
+      .text("Passes: " + d.strength);
+  }
+}
+
+//removes pass number label - bit flashy
+function link_mouseout(d){
+    // slot1.selectAll(".link_label").remove();
+    // slot2.selectAll(".link_label").remove();
+}
 
 //for each data point calculate position for center of circle
 //take center point and angle derived from number of nodes
@@ -686,9 +925,13 @@ function createLinkArray (players, radius) {
     //for each link with another player that is not already calculated (only players for now)
     for (var j = i + 1; j < players[i].links.length - 3; j++) {
         let link = new Object();
+        link.highlighted = false;
+        link.team_id = players[i].team_id;
 
         //calculate strength of linke (number of passes or length of passes)
         let strength = players[i].links[j].npasses + players[j].links[i].npasses;
+        link.strength = strength;
+
         let LOWER_LIMIT = 2; //min strength needed before showing link
         if (strength > LOWER_LIMIT){
 
@@ -704,6 +947,7 @@ function createLinkArray (players, radius) {
 
           link.link_points = link_points;
           link.stroke_width = strength * (radius / 300);
+
 
           //add associated players to link info
           let player_ids = new Array();
