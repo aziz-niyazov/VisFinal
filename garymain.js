@@ -116,14 +116,16 @@ card2.append("rect")
 
 
 //draw the pitch
-let pitch_width = svg_width*0.25;
-let pitch_height = svg_height*0.25;
+let pitch_width = svg_width*0.2;
+let pitch_height = pitch_width * 0.63475;
 let pitch_container = svgContainer.append("g")
-  .attr("transform", "translate(" + svg_width*0.375 + "," + svg_height*0.73 + ")");
+  .attr("transform", "translate(" + svg_width*0.4 + "," + svg_height*0.73 + ")");
 let pitch_img = pitch_container.append("image")
   .attr('xlink:href', 'pitch.png')
   .attr("width",pitch_width)
   .attr("height", pitch_height)
+  // .attr("rx", "40px")
+  // .attr("ry", "40px")
 let pitch_team1 = pitch_container.append("g");
 let pitch_team2 = pitch_container.append("g");
 
@@ -135,7 +137,7 @@ teams[0].main_colour = "#82c6ff";
 teams[0].secondary_colour = "#ffffff";
 teams[1].main_colour = "#1328b2";
 teams[1].secondary_colour = "#ffffff";
-let gk_colour = "#f4db69";
+let gk_colour = "red";
 
 //load match data to get team names and score
 d3.json("matchdata_37.json")
@@ -418,6 +420,7 @@ function renderDiagrams(players){
       else {return teams[0].secondary_colour};
     })
     .on("mouseover", mouseovered)
+    .on("mouseout", mouseout)
     .on("click", on_node_click);
   //numbers
   team1_numbers = team1_enter.append("text")
@@ -439,6 +442,7 @@ function renderDiagrams(players){
       else {return teams[1].secondary_colour};
     })
     .on("mouseover", mouseovered)
+    .on("mouseout", mouseout)
     .on("click", on_node_click);
   //numbers
   team2_numbers = team2_enter.append("text")
@@ -471,6 +475,7 @@ function add_pitch_players(players){
       else {return teams[0].secondary_colour};
     })
     .on("mouseover", mouseovered)
+    .on("mouseout", mouseout)
     .on("click", on_node_click);
   pitch_team1_enter.append("text")
     .attr("x", (d) => {return d.pitch_x;})
@@ -492,6 +497,7 @@ function add_pitch_players(players){
       else {return teams[0].secondary_colour};
     })
     .on("mouseover", mouseovered)
+    .on("mouseout", mouseout)
     .on("click", on_node_click);
 
   pitch_team2_enter.append("text")
@@ -553,6 +559,7 @@ function on_node_click(d){
   update_comparison(d);
   rotate_transition(d);
   draw_pitch_highlight(d);
+  update_link_colours(d);
 }
 
 //show a player in the comparison box
@@ -688,9 +695,6 @@ function rotate_transition(d) {
     numbers_to_rotate = team2_numbers;
   }
 
-
-  console.log("current:" + current_rotation);
-  console.log("initial target: " + rotate_target);
   //minimise rotation
   while (rotate_target > (current_rotation + 180)) {
     rotate_target -= 360;
@@ -699,8 +703,6 @@ function rotate_transition(d) {
     rotate_target += 360;
   }
   var center = "" + team1_center[0] + "," +  team1_center[1];
-
-  console.log("corrected target: " + rotate_target);
 
   diagram_to_rotate.transition()
   .attrTween("transform", function() {
@@ -720,11 +722,6 @@ function rotate_transition(d) {
 
     //delay update of current position so it doesn"t confuse text rotation
     setTimeout(function() {
-
-      //shift rotate target to range 0-360
-      // while (rotate_target < 0){rotate_target += 360;}
-      // while (rotate_target > 360){rotate_target -= 360;}
-      // diagram_to_rotate.attr("transform", "rotate(" + rotate_target + "," + center + ")");
 
       if (d.team_id === teams[0].team_id){
         diagram1_rotation = rotate_target;
@@ -754,15 +751,10 @@ function draw_pitch_highlight(d){
   }
 }
 
-
-//hover function for circles
-//highlight lines connected to that player on mouseover
-function mouseovered(d) {
-
+function update_link_colours(d){
   //highlight lines where that player is the passer
   var lines_to_change;
   var team;
-
   if (d.team_id === players[0][0].team_id) {
     lines_to_change = team1_lines;
     team = 1;
@@ -783,61 +775,70 @@ function mouseovered(d) {
       l.highlighted = false;
       return false;
     })
-    //update player info card
-    var card;
-    if (team === 1) {card = card1;}
-    else {card = card2;}
+}
 
+//hover function for circles
+//highlight lines connected to that player on mouseover
+function mouseovered(d) {
 
-    //select existing rectangle that has been drawn in render
-    card.select("rect")
-      .style("fill","#555")
-      .style("stroke", "#fff")
+  //update player info card
+  var card;
+  if (d.team_id === players[0][0].team_id) {
+    card = card1;
+  }
+  else {
+    card = card2;
+  }
 
-    //add labels
-    card.selectAll(".card_text").remove();
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.06)
-          .text("Name: ")
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.18)
-          .text("Country: ")
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.30)
-          .text("Position: ")
-          .classed("card_text", true);
+  //select existing rectangle that has been drawn in render
+  card.select("rect")
+    .style("fill","#555")
+    .style("stroke", "#fff")
 
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.12)
-          .text(d.name)
-          .classed("card_field", true)
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.24)
-          .text(d.country.name)
-          .classed("card_field", true)
-          .classed("card_text", true);
-    card.append("text")
-          .attr("x", card_width * 0.4)
-          .attr("y", card_width * 0.36)
-          .text(d.position)
-          .classed("card_field", true)
-          .classed("card_text", true);
+  //add labels
+  card.selectAll(".card_text").remove();
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.06)
+        .text("Name: ")
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.18)
+        .text("Country: ")
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.30)
+        .text("Position: ")
+        .classed("card_text", true);
 
-    card.selectAll("image").remove();
-    let card_player_img = card.append("image")
-          .attr('xlink:href', 'player_icon.png')
-          .attr("x", 0)
-          .attr("y", svg_height * 0.01)
-          .attr('width', card_width * 0.4)
-          .attr('height', svg_height * 0.15)
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.12)
+        .text(d.name)
+        .classed("card_field", true)
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.24)
+        .text(d.country.name)
+        .classed("card_field", true)
+        .classed("card_text", true);
+  card.append("text")
+        .attr("x", card_width * 0.4)
+        .attr("y", card_width * 0.36)
+        .text(d.position)
+        .classed("card_field", true)
+        .classed("card_text", true);
+
+  card.selectAll("image").remove();
+  let card_player_img = card.append("image")
+        .attr('xlink:href', 'player_icon.png')
+        .attr("x", 0)
+        .attr("y", svg_height * 0.01)
+        .attr('width', card_width * 0.4)
+        .attr('height', svg_height * 0.15)
 }
 
 function mouseout(d){
