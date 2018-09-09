@@ -12,23 +12,7 @@ let svgContainer = d3.select("body").append("svg")
   .attr("id", "main_svg");
 
 
-//create element groups
-let slot1 = svgContainer.append("g");
-let slot2 = svgContainer.append("g")
-  .attr("transform", "translate(" + svg_width * 2 / 3 + ",0)");
 
-let diagram1 = slot1.append("g")
-  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
-let diagram2 = slot2.append("g")
-  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
-
-let team1_lines = diagram1.append("g")
-  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
-let team2_lines = diagram2.append("g")
-  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
-
-let team1_circles = diagram1.append("g");
-let team2_circles = diagram2.append("g");
 
 //draw comparison box
 let comparison_box = svgContainer.append("g")
@@ -47,16 +31,65 @@ comparison_box.append("line")
   .attr("x1", cb_width / 2)
   .attr("x2", cb_width / 2)
   .attr("y2", cb_height)
-  .attr("id", "comparison_box_line");
+  // .classed("compline", true)
+  .attr("id", "comparison_box_midline");
 let comparison_box_bars = comparison_box.append("g");
 let comparison_box_t1 = comparison_box.append("g");
 let comparison_box_t2 = comparison_box.append("g")
   .attr("transform", "translate(" + cb_width / 2 + ",0)");
+// linking lines
+let comparison_box_links = svgContainer.append("g");
+comparison_box_links.append("line")
+  .attr("x1", team1_center[0])
+  .attr("y1", team1_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.4)
+  .attr("y2", team1_center[1] - radius-node_r)
+comparison_box_links.append("line")
+  .attr("x1", team2_center[0])
+  .attr("y1", team2_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.6)
+  .attr("y2", team2_center[1] - radius-node_r)
+comparison_box_links.append("line")
+  .attr("x1", svg_width * 0.4)
+  .attr("y1", team1_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.4)
+  .attr("y2", svg_height*0.3)
+comparison_box_links.append("line")
+  .attr("x1", svg_width * 0.6)
+  .attr("y1", team2_center[1] - radius - node_r)
+  .attr("x2", svg_width * 0.6)
+  .attr("y2", svg_height*0.3)
+comparison_box_links.append("circle")
+  .attr("cx", team1_center[0])
+  .attr("cy", team1_center[1] - radius)
+comparison_box_links.append("circle")
+  .attr("cx", team2_center[0])
+  .attr("cy", team2_center[1] - radius)
+comparison_box_links.selectAll("line").classed("compline", true);
+comparison_box_links.selectAll("circle").classed("compcircle", true);
+
+
+//create element groups
+let slot1 = svgContainer.append("g");
+let slot2 = svgContainer.append("g")
+  .attr("transform", "translate(" + svg_width * 2 / 3 + ",0)");
+
+let diagram1 = slot1.append("g")
+  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
+let diagram2 = slot2.append("g")
+  .attr("transform", "rotate(0," + team1_center[0] + "," + team1_center[1] + ")");
+
+let team1_lines = diagram1.append("g")
+  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
+let team2_lines = diagram2.append("g")
+  .attr("transform", "translate(" + team1_center[0] + "," + team1_center[1] + ")");
+
+let team1_circles = diagram1.append("g");
+let team2_circles = diagram2.append("g");
 
 var comp_player_1;
 var comp_player_2;
 var stat_bar_widths = new Array();
-// var comp_lock = 0;
 
 var team1_numbers;
 var team2_numbers;
@@ -81,6 +114,19 @@ card2.append("rect")
   .classed("player_card", true)
   .attr("width", card_width);
 
+
+//draw the pitch
+let pitch_width = svg_width*0.25;
+let pitch_height = svg_height*0.25;
+let pitch_container = svgContainer.append("g")
+  .attr("transform", "translate(" + svg_width*0.375 + "," + svg_height*0.73 + ")");
+let pitch_img = pitch_container.append("image")
+  .attr('xlink:href', 'pitch.png')
+  .attr("width",pitch_width)
+  .attr("height", pitch_height)
+let pitch_team1 = pitch_container.append("g");
+let pitch_team2 = pitch_container.append("g");
+
 var players = [[],[]]
 var teams = [{},{}]
 
@@ -89,6 +135,7 @@ teams[0].main_colour = "#82c6ff";
 teams[0].secondary_colour = "#ffffff";
 teams[1].main_colour = "#1328b2";
 teams[1].secondary_colour = "#ffffff";
+let gk_colour = "#f4db69";
 
 //load match data to get team names and score
 d3.json("matchdata_37.json")
@@ -192,6 +239,9 @@ d3.json("data.json")
   calculatePlayerStats(players[1]);
 
   renderDiagrams(players);
+
+  //draw players on pitch
+  add_pitch_players(players);
 })
 
 //gets positions of each player from the main data JSON
@@ -334,6 +384,7 @@ function renderDiagrams(players){
   team1links = createLinkArray(players[0], radius);
   team2links = createLinkArray(players[1], radius);
 
+
   //render lines
   team1_lines.selectAll('path')
   .data(team1links)
@@ -362,13 +413,15 @@ function renderDiagrams(players){
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
     .style("fill", teams[0].main_colour)
-    .style("stroke", teams[0].secondary_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[0].secondary_colour};
+    })
     .on("mouseover", mouseovered)
     .on("click", on_node_click);
-    // .on("click", rotate_transition);
   //numbers
   team1_numbers = team1_enter.append("text")
-    .attr("x", (d) => {return d.cx - node_r/2;})
+    .attr("x", (d) => {return d.cx;})
     .attr("y", (d) => {return d.cy + node_r/3;})
     .style("font-size", node_r)
     .text((d) => {return d.jersey_number})
@@ -381,22 +434,125 @@ function renderDiagrams(players){
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
     .style("fill", teams[1].main_colour)
-    .style("stroke", teams[1].secondary_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[1].secondary_colour};
+    })
     .on("mouseover", mouseovered)
     .on("click", on_node_click);
   //numbers
   team2_numbers = team2_enter.append("text")
-    .attr("x", (d) => {return d.cx - node_r/2;})
+    .attr("x", (d) => {return d.cx;})
     .attr("y", (d) => {return d.cy + node_r/3;})
     .style("font-size", node_r)
     .text((d) => {return d.jersey_number})
     .classed("jersey_numbers", true);
+
+
+}
+
+//renders a circle and number for each player in the pitch section
+function add_pitch_players(players){
+
+  calc_pitch_positions(players[0]);
+  calc_pitch_positions(players[1]);
+
+
+
+  let pitch_team1_enter = pitch_team1.selectAll("circle")
+  .data(players[0]).enter();
+  pitch_team1_enter.append("circle")
+    .attr("cx", (d) => {return d.pitch_x;})
+    .attr("cy", (d) => {return d.pitch_y;})
+    .attr("r", node_r*0.5)
+    .style("fill", teams[0].main_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[0].secondary_colour};
+    })
+    .on("mouseover", mouseovered)
+    .on("click", on_node_click);
+  pitch_team1_enter.append("text")
+    .attr("x", (d) => {return d.pitch_x;})
+    .attr("y", (d) => {return d.pitch_y + node_r/6;})
+    .style("font-size", node_r*0.5)
+    .text((d) => {return d.jersey_number})
+    .classed("jersey_numbers", true);
+
+
+  let pitch_team2_enter = pitch_team2.selectAll("circle")
+  .data(players[1]).enter();
+  pitch_team2_enter.append("circle")
+    .attr("cx", (d) => {return d.pitch_x;})
+    .attr("cy", (d) => {return d.pitch_y;})
+    .attr("r", node_r*0.5)
+    .style("fill", teams[1].main_colour)
+    .style("stroke", (d) => {
+      if (d.position === "Goalkeeper") {return gk_colour}
+      else {return teams[0].secondary_colour};
+    })
+    .on("mouseover", mouseovered)
+    .on("click", on_node_click);
+
+  pitch_team2_enter.append("text")
+    .attr("x", (d) => {return d.pitch_x;})
+    .attr("y", (d) => {return d.pitch_y + node_r/6;})
+    .style("font-size", node_r*0.5)
+    .text((d) => {return d.jersey_number})
+    .classed("jersey_numbers", true);
+}
+
+//assigns a pitch position to the player based on their position name
+function calc_pitch_positions(players){
+  let sub_count = 0;
+  for (var i = 0; i < players.length; i++) {
+    p = players[i];
+    console.log(p.position);
+    if (p.position.includes("Goalkeeper")) {
+      p.pitch_x = pitch_width * 0.05;
+      p.pitch_y = pitch_height * 0.5;
+    }
+    else if (p.position.includes("Back")) {
+      p.pitch_x = pitch_width * 0.15;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.8;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.2;}
+    }
+    else if (p.position.includes("Midfield")) {
+      p.pitch_x = pitch_width * 0.27;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
+    }
+    else if (p.position.includes("Forward") || p.position.includes("Wing")) {
+      p.pitch_x = pitch_width * 0.4;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.6;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.4;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.73;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.27;}
+    }
+    else if (p.position.includes("Substitute")){
+      p.pitch_y = 0;
+      p.pitch_x = pitch_width * (sub_count++ * 0.07);
+    }
+    //switch positions for away team
+    if (p.team_id === teams[1].team_id) {
+      p.pitch_x = pitch_width - p.pitch_x;
+      p.pitch_y = pitch_height - p.pitch_y;
+    }
+  }
 
 }
 
 function on_node_click(d){
   update_comparison(d);
   rotate_transition(d);
+  draw_pitch_highlight(d);
 }
 
 //show a player in the comparison box
@@ -516,7 +672,7 @@ function rotate_transition(d) {
 
   const duration = 1000;
   // The angle we need to rotate to:
-  let rotate_target = -d.angle * 180 / Math.PI;
+  let rotate_target = 360-(d.angle * 180 / Math.PI);
 
   //check which team to rotate
   if (d.team_id === teams[0].team_id) {
@@ -532,14 +688,19 @@ function rotate_transition(d) {
     numbers_to_rotate = team2_numbers;
   }
 
+
+  console.log("current:" + current_rotation);
+  console.log("initial target: " + rotate_target);
   //minimise rotation
-  if (rotate_target > (current_rotation + 180)) {
+  while (rotate_target > (current_rotation + 180)) {
     rotate_target -= 360;
   }
-  else if (rotate_target < (current_rotation - 180)) {
+  while (rotate_target < (current_rotation - 180)) {
     rotate_target += 360;
   }
   var center = "" + team1_center[0] + "," +  team1_center[1];
+
+  console.log("corrected target: " + rotate_target);
 
   diagram_to_rotate.transition()
   .attrTween("transform", function() {
@@ -559,9 +720,38 @@ function rotate_transition(d) {
 
     //delay update of current position so it doesn"t confuse text rotation
     setTimeout(function() {
-      if (d.team_id === teams[0].team_id){diagram1_rotation = rotate_target;}
-      else {diagram2_rotation = rotate_target;}
-    }, (duration));
+
+      //shift rotate target to range 0-360
+      // while (rotate_target < 0){rotate_target += 360;}
+      // while (rotate_target > 360){rotate_target -= 360;}
+      // diagram_to_rotate.attr("transform", "rotate(" + rotate_target + "," + center + ")");
+
+      if (d.team_id === teams[0].team_id){
+        diagram1_rotation = rotate_target;
+      }
+      else {
+        diagram2_rotation = rotate_target;
+      }
+    }, (duration*1.01));
+}
+
+function draw_pitch_highlight(d){
+  //add highlight circles
+  pitch_team1.selectAll(".compcircle_small").remove();
+  pitch_team2.selectAll(".compcircle_small").remove();
+
+  if (comp_player_1 !== undefined){
+    pitch_team1.insert("circle",":first-child")
+      .attr("cx", () => {return comp_player_1.pitch_x;})
+      .attr("cy", () => {return comp_player_1.pitch_y;})
+      .classed("compcircle_small", true);
+  }
+  if (comp_player_2 !== undefined){
+    pitch_team2.insert("circle",":first-child")
+      .attr("cx", () => {return comp_player_2.pitch_x;})
+      .attr("cy", () => {return comp_player_2.pitch_y;})
+      .classed("compcircle_small", true);
+  }
 }
 
 
