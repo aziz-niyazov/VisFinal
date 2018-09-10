@@ -132,7 +132,7 @@ let pitch_height = pitch_width * 0.63475;
 let pitch_container = svgContainer.append("g")
   .attr("transform", "translate(" + ((svg_width/2)-(pitch_width/2)) + "," + svg_height*0.73 + ")");
 let pitch_img = pitch_container.append("image")
-  .attr('xlink:href', 'pitch.png')
+  .attr('xlink:href', 'images/pitch.png')
   .attr("width",pitch_width)
   .attr("height", pitch_height)
 let pitch_team1 = pitch_container.append("g");
@@ -151,7 +151,7 @@ teams[1].sub_colour = "#132266";
 let gk_colour = "#349b5b";
 
 //load match data to get team names and score
-d3.json("matchdata_37.json")
+d3.json("../data/matchdata_37.json")
   .then(function(match_data_array){
 
     let match_data = match_data_array[0];
@@ -226,86 +226,93 @@ d3.json("matchdata_37.json")
     //   + match_data.season.season_name + ", " + match_data.match_date;
     // title_bar.append("h2").text(subtitle_text).attr("class", "subtitle");
 
+    //trigger load of next json file - lineups
+    load_lineups();
+
   });
 
+
 //loading player info from lineups
-d3.json("lineups_7298.json")
-  .then(function(lineups){
+function load_lineups(){
+  d3.json("../data/lineups_7298.json")
+    .then(function(lineups){
 
-  // for each team
-	for(var i = 0; i < lineups.length; i++){
+    // for each team
+  	for(var i = 0; i < lineups.length; i++){
 
-    //for each player
-		for(var j = 0; j < lineups[i].lineup.length; j++){
-			p = new Object()
-			p.id = lineups[i].lineup[j].player_id
-			p.name = lineups[i].lineup[j].player_name
-      p.position = "(Substitute)";
-			p.jersey_number = lineups[i].lineup[j].jersey_number
-			p.country = new Object()
-			p.country.id = lineups[i].lineup[j].country.id
-			p.country.name = lineups[i].lineup[j].country.name
-			p.team_id = lineups[i].team_id
-			p.team_name = lineups[i].team_name
+      //for each player
+  		for(var j = 0; j < lineups[i].lineup.length; j++){
+  			p = new Object()
+  			p.id = lineups[i].lineup[j].player_id
+  			p.name = lineups[i].lineup[j].player_name
+        p.position = "(Substitute)";
+  			p.jersey_number = lineups[i].lineup[j].jersey_number
+  			p.country = new Object()
+  			p.country.id = lineups[i].lineup[j].country.id
+  			p.country.name = lineups[i].lineup[j].country.name
+  			p.team_id = lineups[i].team_id
+  			p.team_name = lineups[i].team_name
 
-			p.events = new Array()
-      p.links = new Array()
+  			p.events = new Array()
+        p.links = new Array()
 
-      // add to correct player array
-			if(p.team_id === teams[0].team_id){
-				players[0].push(p)
-			}else{
-				players[1].push(p)
-			}
-		}
-	}
-
-
-  //TODO check that player json loaded successfully
-})
+        // add to correct player array
+  			if(p.team_id === teams[0].team_id){
+  				players[0].push(p)
+  			}else{
+  				players[1].push(p)
+  			}
+  		}
+  	}
+  })
+  //trigger load of next json file - events
+  load_events();
+}
 
 
 //load events from json file
-d3.json("data.json")
-  .then(function(data){
+function load_events(){
+  d3.json("../data/data.json")
+    .then(function(data){
+
+    //filter to only passes and shots
+    var useful_events = data.filter(e => {
+      return (e.type.name == "Pass" || e.type.name == "Shot");
+    });
+
+    //filter for each team
+    var team1_events = useful_events.filter(e => {
+      return (e.team.id === players[0][0].team_id);
+    });
+    var team2_events = useful_events.filter(e => {
+      return (e.team.id === players[1][0].team_id);
+    });
+
+    get_position(players[0], data[0].tactics.lineup)
+    get_position(players[1], data[1].tactics.lineup)
+    players[0] = sort_by_position(players[0]);
+    players[1] = sort_by_position(players[1]);
+
+    //allocate each event to the relevant player
+    allocateEvents(players[0], team1_events);
+    allocateEvents(players[1], team2_events);
+
+    //calculate links between each player, within each team
+    calculatePlayerLinks(players[0]);
+    calculatePlayerLinks(players[1]);
+
+    calculatePlayerStats(players[0]);
+    calculatePlayerStats(players[1]);
+
+    renderDiagrams(players);
+
+    //draw players on pitch
+    add_pitch_players(players);
+  })
+}
 
 
-  //filter to only passes and shots
-  var useful_events = data.filter(e => {
-    return (e.type.name == "Pass" || e.type.name == "Shot");
-  });
 
-  //filter for each team
-  var team1_events = useful_events.filter(e => {
-    return (e.team.id === players[0][0].team_id);
-  });
-  var team2_events = useful_events.filter(e => {
-    return (e.team.id === players[1][0].team_id);
-  });
-
-
-
-  get_position(players[0], data[0].tactics.lineup)
-  get_position(players[1], data[1].tactics.lineup)
-  players[0] = sort_by_position(players[0]);
-  players[1] = sort_by_position(players[1]);
-
-  //allocate each event to the relevant player
-  allocateEvents(players[0], team1_events);
-  allocateEvents(players[1], team2_events);
-
-  //calculate links between each player, within each team
-  calculatePlayerLinks(players[0]);
-  calculatePlayerLinks(players[1]);
-
-  calculatePlayerStats(players[0]);
-  calculatePlayerStats(players[1]);
-
-  renderDiagrams(players);
-
-  //draw players on pitch
-  add_pitch_players(players);
-})
 
 //gets positions of each player from the main data JSON
 function get_position(playerList,lineupList) {
@@ -867,11 +874,11 @@ function mouseovered(d) {
   var img_name;
   if (d.team_id === players[0][0].team_id) {
     card = card1;
-    img_name = 'team1.png';
+    img_name = 'images/team1.png';
   }
   else {
     card = card2;
-    img_name = 'team2.png';
+    img_name = 'images/team2.png';
   }
 
   //select existing rectangle that has been drawn in render
@@ -1000,10 +1007,6 @@ function createLinkArray (players, radius) {
 
   //for each player
   for (var i = 0; i < players.length; i++) {
-
-    if (players[i].id == 4636) {
-      console.log(players[i].links);
-    }
 
     //for each link with another player that is not already calculated (only players for now)
     for (var j = i + 1; j < players[i].links.length - 3; j++) {
