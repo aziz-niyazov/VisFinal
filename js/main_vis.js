@@ -183,8 +183,8 @@ function load_events(){
     renderDiagram(1,teams[0], players[0], team1_center, radius);
     renderDiagram(2,teams[1], players[1], team1_center, radius);
 
-    //draw players on pitch
-    add_pitch_players(players);
+    add_pitch_players(1, teams[0], players[0]);
+    add_pitch_players(2, teams[1], players[1]);
   })
 }
 
@@ -234,7 +234,8 @@ function renderDiagram(team_num, team, playerList, center, radius){
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
     .on("click", on_node_click);
-  //numbers
+
+  //render numbers
   team.numbers = team_enter.append("text")
     .attr("x", (d) => {return d.cx;})
     .attr("y", (d) => {return d.cy + node_r/3;})
@@ -244,126 +245,43 @@ function renderDiagram(team_num, team, playerList, center, radius){
 
 }
 
+//draw players on pitch graphic
+function add_pitch_players(team_num, team, playerList){
 
-//renders a circle and number for each player in the pitch section
-function add_pitch_players(players){
+    calc_pitch_positions(playerList);
 
-  calc_pitch_positions(players[0]);
-  calc_pitch_positions(players[1]);
+    var pitch_group
+    if (team_num === 1){
+       pitch_group = pitch_team1;
+    }
+    else {
+      pitch_group = pitch_team2;
+    }
 
-
-
-  let pitch_team1_enter = pitch_team1.selectAll("circle")
-  .data(players[0]).enter();
-  pitch_team1_enter.append("circle")
-    .attr("cx", (d) => {return d.pitch_x;})
-    .attr("cy", (d) => {return d.pitch_y;})
-    .attr("r", node_r*0.5)
-    .style("fill", (d) => {
-      if (d.position === "Goalkeeper") {return gk_colour}
-      else if (d.position === "(Substitute)"){return teams[0].sub_colour;}
-      else {return teams[0].main_colour};
-    })
-    .style("stroke", teams[0].secondary_colour)
-    .on("mouseover", mouseovered)
-    .on("mouseout", mouseout)
-    .on("click", on_node_click);
-  pitch_team1_enter.append("text")
-    .attr("x", (d) => {return d.pitch_x;})
-    .attr("y", (d) => {return d.pitch_y + node_r/6;})
-    .style("font-size", node_r*0.5)
-    .text((d) => {return d.jersey_number})
-    .classed("jersey_numbers", true);
-
-
-  let pitch_team2_enter = pitch_team2.selectAll("circle")
-  .data(players[1]).enter();
-  pitch_team2_enter.append("circle")
-    .attr("cx", (d) => {return d.pitch_x;})
-    .attr("cy", (d) => {return d.pitch_y;})
-    .attr("r", node_r*0.5)
-    .style("fill", (d) => {
-      if (d.position === "Goalkeeper") {return gk_colour}
-      else if (d.position === "(Substitute)"){return teams[1].sub_colour;}
-      else {return teams[1].main_colour};
-    })
-    .style("stroke", teams[1].secondary_colour)
-    .on("mouseover", mouseovered)
-    .on("mouseout", mouseout)
-    .on("click", on_node_click);
-
-  pitch_team2_enter.append("text")
-    .attr("x", (d) => {return d.pitch_x;})
-    .attr("y", (d) => {return d.pitch_y + node_r/6;})
-    .style("font-size", node_r*0.5)
-    .text((d) => {return d.jersey_number})
-    .classed("jersey_numbers", true);
+    let pitch_team_enter = pitch_group.selectAll("circle")
+    .data(playerList).enter();
+    pitch_team_enter.append("circle")
+      .attr("cx", (d) => {return d.pitch_x;})
+      .attr("cy", (d) => {return d.pitch_y;})
+      .attr("r", node_r*0.5)
+      .style("fill", (d) => {
+        if (d.position === "Goalkeeper") {return gk_colour}
+        else if (d.position === "(Substitute)"){return team.sub_colour;}
+        else {return team.main_colour};
+      })
+      .style("stroke", team.secondary_colour)
+      .on("mouseover", mouseovered)
+      .on("mouseout", mouseout)
+      .on("click", on_node_click);
+    pitch_team_enter.append("text")
+      .attr("x", (d) => {return d.pitch_x;})
+      .attr("y", (d) => {return d.pitch_y + node_r/6;})
+      .style("font-size", node_r*0.5)
+      .text((d) => {return d.jersey_number})
+      .classed("jersey_numbers", true);
 }
 
-//assigns a pitch position to the player based on their position name
-function calc_pitch_positions(players){
-  let sub_count = 0;
-  for (var i = 0; i < players.length; i++) {
-    p = players[i];
-    if (p.position.includes("Goalkeeper")) {
-      p.pitch_x = pitch_width * 0.05;
-      p.pitch_y = pitch_height * 0.5;
-    }
-    else if (p.position.includes("Back")) {
-      p.pitch_x = pitch_width * 0.15;
-      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
-      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
-      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
-      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
-      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
-    }
-    else if (p.position.includes("Midfield")) {
-      p.pitch_x = pitch_width * 0.27;
-      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
-      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
-      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
-      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
-      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
-    }
-    else if (p.position.includes("Forward") || p.position.includes("Wing")) {
-      p.pitch_x = pitch_width * 0.4;
-      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.6;}
-      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.4;}
-      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
-      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.73;}
-      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.27;}
-    }
-    else if (p.position.includes("Substitute")){
-      p.pitch_y = pitch_height * (sub_count++ * 0.14);
-      p.pitch_x = pitch_width * -0.06;
-    }
-    //switch positions for away team
-    if (p.team_id === teams[1].team_id) {
-      p.pitch_x = pitch_width - p.pitch_x;
-      if(!p.position.includes("Substitute")){
-        p.pitch_y = pitch_height - p.pitch_y;
-      }
-    }
-  }
-
-}
-
-//sort a list of players by their position
-function sort_by_position(playerList){
-  let sorted_players = new Array();
-  let positions_list = ["Goalkeeper", "Left Back", "Left Center Back", "Center Back", "Right Center Back", "Right Back",
-   "Left Midfield", "Left Center Midfield", "Center Midfield", "Right Center Midfield", "Right Midfield", "Left Wing",
-   "Left Center Forward", "Center Forward", "Right Center Forward", "Right Wing", "(Substitute)"];
-
-   for (var i = 0; i < positions_list.length; i++) {
-     for (var j = 0; j < playerList.length; j++) {
-       if(playerList[j].position === positions_list[i]){
-         sorted_players.push(playerList[j]);
-       }
-     }
-   }
-   return sorted_players;
-}
+//INTERACTION helpers ============================================================================
 
 function on_node_click(d){
   update_comparison(d);
@@ -703,6 +621,74 @@ function link_hover(d) {
       .attr("y", team1_center[1])
       .text("Passes: " + d.strength);
   }
+}
+
+//GRAPH SETUP HELPERS =========================================================================
+
+
+//assigns a pitch position to the player based on their position name
+function calc_pitch_positions(players){
+  let sub_count = 0;
+  for (var i = 0; i < players.length; i++) {
+    p = players[i];
+    if (p.position.includes("Goalkeeper")) {
+      p.pitch_x = pitch_width * 0.05;
+      p.pitch_y = pitch_height * 0.5;
+    }
+    else if (p.position.includes("Back")) {
+      p.pitch_x = pitch_width * 0.15;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
+    }
+    else if (p.position.includes("Midfield")) {
+      p.pitch_x = pitch_width * 0.27;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
+    }
+    else if (p.position.includes("Forward") || p.position.includes("Wing")) {
+      p.pitch_x = pitch_width * 0.4;
+      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.6;}
+      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.4;}
+      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
+      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.73;}
+      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.27;}
+    }
+    else if (p.position.includes("Substitute")){
+      p.pitch_y = pitch_height * (sub_count++ * 0.14);
+      p.pitch_x = pitch_width * -0.06;
+    }
+    //switch positions for away team
+    if (p.team_id === teams[1].team_id) {
+      p.pitch_x = pitch_width - p.pitch_x;
+      if(!p.position.includes("Substitute")){
+        p.pitch_y = pitch_height - p.pitch_y;
+      }
+    }
+  }
+
+}
+
+//sort a list of players by their position
+function sort_by_position(playerList){
+  let sorted_players = new Array();
+  let positions_list = ["Goalkeeper", "Left Back", "Left Center Back", "Center Back", "Right Center Back", "Right Back",
+   "Left Midfield", "Left Center Midfield", "Center Midfield", "Right Center Midfield", "Right Midfield", "Left Wing",
+   "Left Center Forward", "Center Forward", "Right Center Forward", "Right Wing", "(Substitute)"];
+
+   for (var i = 0; i < positions_list.length; i++) {
+     for (var j = 0; j < playerList.length; j++) {
+       if(playerList[j].position === positions_list[i]){
+         sorted_players.push(playerList[j]);
+       }
+     }
+   }
+   return sorted_players;
 }
 
 //for each data point calculate position for center of circle
