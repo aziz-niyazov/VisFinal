@@ -179,38 +179,38 @@ function load_events(){
     calculatePlayerStats(players[0]);
     calculatePlayerStats(players[1]);
 
-    renderDiagrams(players);
+    // renderDiagrams(players);
+    renderDiagram(1,teams[0], players[0], team1_center, radius);
+    renderDiagram(2,teams[1], players[1], team1_center, radius);
 
     //draw players on pitch
     add_pitch_players(players);
   })
 }
 
-
-function renderDiagrams(players){
-
-  team1_nodes = radialLayout(players[0], team1_center, radius);
-  team2_nodes = radialLayout(players[1], team1_center, radius);
+//renders a radial node diagram from a player list
+function renderDiagram(team_num, team, playerList, center, radius){
 
   //to create lines
   let radialLineGenerator = d3.radialLine()
     .curve(d3.curveBasis);
 
-  team1links = createLinkArray(players[0], radius);
-  team2links = createLinkArray(players[1], radius);
+  nodes = radialLayout(playerList, center, radius);
+  links = createLinkArray(playerList, radius);
 
+  var line_group, circle_group
+  if (team_num === 1){
+     line_group = team1_lines;
+     circle_group = team1_circles;
+  }
+  else {
+     line_group = team2_lines;
+     circle_group = team2_circles;
+  }
 
   //render lines
-  team1_lines.selectAll('path')
-  .data(team1links)
-  .enter().append("path")
-    .attr('stroke-width', (d) => {return d.stroke_width})
-    .attr("class", "pass_line")
-    .attr('d', (d) => { return radialLineGenerator(d.link_points)})
-    .on("mouseover", link_hover);
-
-  team2_lines.selectAll('path')
-  .data(team2links)
+  line_group.selectAll('path')
+  .data(links)
   .enter().append("path")
     .attr('stroke-width', (d) => {return d.stroke_width})
     .attr("class", "pass_line")
@@ -218,55 +218,32 @@ function renderDiagrams(players){
     .on("mouseover", link_hover);
 
   //render circles:
-  let team1_enter = team1_circles.selectAll("circle")
-  .data(team1_nodes).enter();
+  let team_enter = circle_group.selectAll("circle")
+  .data(nodes).enter();
 
-  team1_enter.append("circle")
+  team_enter.append("circle")
     .attr("cx", (d) => {return d.cx;})
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
     .style("fill", (d) => {
       if (d.position === "Goalkeeper") {return gk_colour}
-      else if (d.position === "(Substitute)"){return teams[0].sub_colour;}
-      else {return teams[0].main_colour};
+      else if (d.position === "(Substitute)"){return team.sub_colour;}
+      else {return team.main_colour};
     })
-    .style("stroke", teams[0].secondary_colour)
+    .style("stroke", team.secondary_colour)
     .on("mouseover", mouseovered)
     .on("mouseout", mouseout)
     .on("click", on_node_click);
   //numbers
-  teams[0].numbers = team1_enter.append("text")
+  team.numbers = team_enter.append("text")
     .attr("x", (d) => {return d.cx;})
     .attr("y", (d) => {return d.cy + node_r/3;})
     .style("font-size", node_r)
     .text((d) => {return d.jersey_number})
     .classed("jersey_numbers", true);
-
-  let team2_enter = team2_circles.selectAll("circle")
-  .data(team2_nodes).enter();
-  team2_enter.append("circle")
-    .attr("cx", (d) => {return d.cx;})
-    .attr("cy", (d) => {return d.cy;})
-    .attr("r", node_r)
-    .style("fill", (d) => {
-      if (d.position === "Goalkeeper") {return gk_colour}
-      else if (d.position === "(Substitute)"){return teams[1].sub_colour;}
-      else {return teams[1].main_colour};
-    })
-    .style("stroke", teams[1].secondary_colour)
-    .on("mouseover", mouseovered)
-    .on("mouseout", mouseout)
-    .on("click", on_node_click);
-  //numbers
-  teams[1].numbers = team2_enter.append("text")
-    .attr("x", (d) => {return d.cx;})
-    .attr("y", (d) => {return d.cy + node_r/3;})
-    .style("font-size", node_r)
-    .text((d) => {return d.jersey_number})
-    .classed("jersey_numbers", true);
-
 
 }
+
 
 //renders a circle and number for each player in the pitch section
 function add_pitch_players(players){
