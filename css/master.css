@@ -16,29 +16,10 @@ body {
     user-select: none;
 }
 
-
-rect.title {
-  height: 14%;
-  width: 50%;
-}
-rect.title_left {
-  x:0;
-  y:0;
-}
-rect.title_right {
-  x:50%;
-  y:0%;
-}
 rect.score_separator {
   fill:#444;
   stroke:black;
-  stroke_width:3;
-  rx:1%;
-  ry:1%;
-  x:41%;
-  y:-5%;
-  width:18%;
-  height: 12%;
+  /* stroke_width:3; */
 }
 text.title_text{
   fill:#fff;
@@ -72,9 +53,9 @@ text.exp_text{
 }
 
 text.jersey_numbers {
-  font-size: 20px;
   font-family: sans-serif;
   font:impact;
+  font:Verdana;
   pointer-events: none;
   fill:white;
   text-anchor:middle;
@@ -179,12 +160,7 @@ text.sr{
 }
 
 rect.player_card{
-
-  y:0;
-  height:17%;
   fill:none;
-  rx:5px;
-  ry:5px;
   stroke:#474a4f;
 }
 

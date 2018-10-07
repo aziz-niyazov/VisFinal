@@ -60,7 +60,8 @@ let pitch_team1 = pitch_container.append("g");
 let pitch_team2 = pitch_container.append("g");
 
 
-let title_bar_svg = svgContainer.append("g");
+let title_bar_svg = svgContainer.append("g")
+  .attr("class", "title_bar_svg");
 
 
 //other globals
@@ -276,7 +277,7 @@ function add_pitch_players(team_num, team, playerList){
     pitch_team_enter.append("text")
       .attr("x", (d) => {return d.pitch_x;})
       .attr("y", (d) => {return d.pitch_y + node_r/6;})
-      .style("font-size", node_r*0.5)
+      .attr("font-size", node_r*0.5)
       .text((d) => {return d.jersey_number})
       .classed("jersey_numbers", true);
 }
@@ -310,6 +311,7 @@ function update_comparison(p) {
   }
 
   //remove previous texts and bars
+  comparison_box.select("#placeholder").remove();
   cp_pane.selectAll("text").remove();
   comparison_box_bars.selectAll("rect").remove();
 
@@ -952,9 +954,11 @@ function visual_setup(){
     .attr("x2", cb_width / 2)
     .attr("y2", cb_height)
     .attr("id", "comparison_box_midline");
-  comparison_box_t1.append("text").text("Click on a player to compare")
+  // comparison_box_t1.append("text").text("Click on a player to compare")
+  comparison_box.append("text").text("Click on a player to compare")
   .attr("x",cb_width / 2)
   .attr("y", cb_height / 2)
+  .attr("id", "placeholder")
   .classed("comp_box_title", true);
 
   //draw comparison box links
@@ -990,10 +994,16 @@ function visual_setup(){
   //draw player info card
   card1.append("rect")
     .classed("player_card", true)
-    .attr("width", card_width);
+    .attr("width", card_width)
+    .attr("rx", 5)
+    .attr("ry", 5)
+    .attr("height", 0.17*svg_height);
   card2.append("rect")
     .classed("player_card", true)
-    .attr("width", card_width);
+    .attr("width", card_width)
+    .attr("rx", 5)
+    .attr("ry", 5)
+    .attr("height", 0.17*svg_height);
 
   //draw the pitch
   pitch_img.append("image")
@@ -1004,15 +1014,24 @@ function visual_setup(){
 
 function draw_titles(teams){
   title_bar_svg.append("rect")
-    .classed("title", true)
     .classed("title_left", true)
+    .attr("height", 0.14*svg_height)
+    .attr("width", 0.5*svg_width)
     .style("fill", teams[0].main_colour);
   title_bar_svg.append("rect")
-    .classed("title", true)
-    .classed("title_right", true)
+    .attr("x", 0.5*svg_width)
+    .attr("height", 0.14*svg_height)
+    .attr("width", 0.5*svg_width)
     .style("fill", teams[1].main_colour);
 
   title_bar_svg.append("rect")
+    .attr("x", 0.41*svg_width)
+    .attr("y", -0.05*svg_height)
+    .attr("width", 0.18*svg_width)
+    .attr("height", 0.12*svg_height)
+    .attr("rx", 0.01*svg_width)
+    .attr("ry", 0.01*svg_width)
+    .style("stroke_width", 3)
     .classed("score_separator", true);
 
   title_bar_svg.append("circle")
