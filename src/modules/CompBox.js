@@ -42,9 +42,6 @@ export default class CompBox {
     .attr("id", "placeholder")
     .classed("comp_box_title", true);
 
-
-
-
     this.stat_bar_widths = new Array();
     this.comp_player_1;
     this.comp_player_2;
@@ -52,9 +49,6 @@ export default class CompBox {
 
   //show a player in the comparison box
   update_comparison(p, teams) {
-
-
-    console.log("start" + this.stat_bar_widths);
 
     const px_per_line = (this.cb_height*0.95) / p.statistics.length;
     var cp_pane;
@@ -84,8 +78,6 @@ export default class CompBox {
     //check there are players to compare before drawing bars
     if (this.comp_player_1 !== undefined && this.comp_player_2 !== undefined){
 
-
-
       //stat bars - base bars (away team colour)
       stat_bars.append("rect")
         .attr("x",pad * 0.8 )
@@ -96,8 +88,6 @@ export default class CompBox {
           if (!isNaN(parseFloat(d3.values(d)[0]))){return teams[1].main_colour}
           else {return "none";}
         });
-
-
 
       //stat bars - create with previous length
       let moving_bars = stat_bars.append("rect")
@@ -169,8 +159,21 @@ export default class CompBox {
       .classed("sl", (d) => {return cp_pane === this.comparison_box_t1;})
       .classed("sr", (d) => {return cp_pane === this.comparison_box_t2;});
 
+  }
 
-      console.log("end" + this.stat_bar_widths);
+  get comp_player_1(){
+    return this._comp_player_1;
+  }
 
+  set comp_player_1(value){
+    this._comp_player_1 = value;
+  }
+
+  get comp_player_2(){
+    return this._comp_player_2;
+  }
+
+  set comp_player_2(value){
+    this._comp_player_2 = value;
   }
 }

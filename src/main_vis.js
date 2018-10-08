@@ -1,11 +1,9 @@
 import * as d3 from './modules/d3.min.js';
 import * as pageSetup from './modules/page_setup.js';
+import * as interactions from './modules/interactions.js';
 import CompBox from './modules/CompBox.js';
-
-// import TestClass from './modules/test_class.js';
-
-// let tc = new TestClass("hallooo");
-// console.log(tc.reply());
+import Pitch from './modules/Pitch.js';
+import PlayerInfoCard from './modules/Card.js';
 
 
 //globals for sizes =======================================================
@@ -18,9 +16,7 @@ const node_r = svg_width / 60; //circle radius
 const cb_width = svg_width * 0.3;
 const cb_height = svg_height * 0.4;
 const card_width = radius*1.5;
-const pitch_width = svg_width*0.2;
-const pitch_height = pitch_width * 0.63475;
-
+const card_height = svg_height*0.17;
 
 //create element groups=======================================================
 //main svg container
@@ -29,7 +25,10 @@ let svgContainer = d3.select("body").append("svg")
   .attr("height", svg_height)
   .attr("id", "main_svg");
 
+pageSetup.visual_setup(svgContainer, team1_center, team2_center, radius, node_r);
+
 let compBox = new CompBox(cb_width, cb_height, svgContainer);
+let pitch = new Pitch(svgContainer);
 
 //for diagrams
 let slot1 = svgContainer.append("g");
@@ -49,32 +48,33 @@ let team2_circles = diagram2.append("g");
 //creating a rectangle for player info card
 let cardContainer = svgContainer.append("g")
   .attr("transform","translate(0, " + (team1_center[1] + radius + (node_r*2)) + ")");
-let card1 = cardContainer.append("g")
-  .attr("transform", "translate(" + (team1_center[0] - (radius*0.75)) + ",0)");
-let card2 = cardContainer.append("g")
-  .attr("transform", "translate(" + ((team1_center[0] - (radius*0.75)) + (svg_width * 2 / 3)) + ",0)");
+
+let card1 = new PlayerInfoCard(cardContainer, (team1_center[0] - (radius*0.75)), 0, card_width, card_height);
+let card2 = new PlayerInfoCard(cardContainer, ((team1_center[0] - (radius*0.75)) + (svg_width * 2 / 3)) , 0, card_width, card_height);
+
+// let card1 = cardContainer.append("g")
+//   .attr("transform", "translate(" + (team1_center[0] - (radius*0.75)) + ",0)");
+// let card2 = cardContainer.append("g")
+//   .attr("transform", "translate(" + ((team1_center[0] - (radius*0.75)) + (svg_width * 2 / 3)) + ",0)");
 
 //create container for pitch
-let pitch_container = svgContainer.append("g")
-  .attr("transform", "translate(" + ((svg_width/2)-(pitch_width/2)) + "," + svg_height*0.73 + ")");
-let pitch_img = pitch_container.append("g");
-let pitch_team1 = pitch_container.append("g");
-let pitch_team2 = pitch_container.append("g");
+// let pitch_container = svgContainer.append("g")
+//   .attr("transform", "translate(" + ((svg_width/2)-(pitch_width/2)) + "," + svg_height*0.73 + ")");
+// let pitch_img = pitch_container.append("g");
+// let pitch_team1 = pitch_container.append("g");
+// let pitch_team2 = pitch_container.append("g");
 
 
 let title_bar_svg = svgContainer.append("g")
   .attr("class", "title_bar_svg");
-
-
-//other globals
-// var comp_player_1;
-// var comp_player_2;
 
 var diagram1_rotation = 0;
 var diagram2_rotation = 0;
 
 var players = [[],[]]
 var teams = [{},{}]
+
+export{players, card1, card2};
 
 //set team colours manually - no info for this in the JSON
 teams[0].main_colour = "#82c6ff";
@@ -83,10 +83,9 @@ teams[0].sub_colour = "#3d5d77";
 teams[1].main_colour = "#3156f9";
 teams[1].secondary_colour = "#ffffff";
 teams[1].sub_colour = "#132266";
-const gk_colour = "#349b5b";
+teams[0].gk_colour = "#349b5b";
+teams[1].gk_colour = "#349b5b";
 
-//draw some static stuff
-// pageSetup.visual_setup(svgContainer);
 
 //load match data to get team names and score
 d3.json("../data/matchdata_37.json")
@@ -156,8 +155,6 @@ function load_events(){
   d3.json("../data/data.json")
     .then(function(data){
 
-    console.log("event json loaded");
-
     //filter to only passes and shots
     var useful_events = data.filter(e => {
       return (e.type.name == "Pass" || e.type.name == "Shot");
@@ -170,8 +167,6 @@ function load_events(){
     var team2_events = useful_events.filter(e => {
       return (e.team.id === players[1][0].team_id);
     });
-
-
 
     get_position(players[0], data[0].tactics.lineup)
     get_position(players[1], data[1].tactics.lineup)
@@ -194,8 +189,8 @@ function load_events(){
     renderDiagram(1,teams[0], players[0], team1_center, radius);
     renderDiagram(2,teams[1], players[1], team1_center, radius);
 
-    add_pitch_players(1, teams[0], players[0]);
-    add_pitch_players(2, teams[1], players[1]);
+    pitch.add_pitch_players(1, teams[0], players[0], node_r);
+    pitch.add_pitch_players(2, teams[1], players[1], node_r);
 
   })
 }
@@ -238,13 +233,13 @@ function renderDiagram(team_num, team, playerList, center, radius){
     .attr("cy", (d) => {return d.cy;})
     .attr("r", node_r)
     .style("fill", (d) => {
-      if (d.position === "Goalkeeper") {return gk_colour}
+      if (d.position === "Goalkeeper") {return team.gk_colour}
       else if (d.position === "(Substitute)"){return team.sub_colour;}
       else {return team.main_colour};
     })
     .style("stroke", team.secondary_colour)
-    .on("mouseover", mouseovered)
-    .on("mouseout", mouseout)
+    .on("mouseover", interactions.mouseovered)
+    .on("mouseout", interactions.mouseout)
     .on("click", on_node_click);
 
   //render numbers
@@ -254,44 +249,8 @@ function renderDiagram(team_num, team, playerList, center, radius){
     .style("font-size", node_r)
     .text((d) => {return d.jersey_number})
     .classed("jersey_numbers", true);
-
 }
 
-//draw players on pitch graphic
-function add_pitch_players(team_num, team, playerList){
-
-    calc_pitch_positions(playerList);
-
-    var pitch_group
-    if (team_num === 1){
-       pitch_group = pitch_team1;
-    }
-    else {
-      pitch_group = pitch_team2;
-    }
-
-    let pitch_team_enter = pitch_group.selectAll("circle")
-    .data(playerList).enter();
-    pitch_team_enter.append("circle")
-      .attr("cx", (d) => {return d.pitch_x;})
-      .attr("cy", (d) => {return d.pitch_y;})
-      .attr("r", node_r*0.5)
-      .style("fill", (d) => {
-        if (d.position === "Goalkeeper") {return gk_colour}
-        else if (d.position === "(Substitute)"){return team.sub_colour;}
-        else {return team.main_colour};
-      })
-      .style("stroke", team.secondary_colour)
-      .on("mouseover", mouseovered)
-      .on("mouseout", mouseout)
-      .on("click", on_node_click);
-    pitch_team_enter.append("text")
-      .attr("x", (d) => {return d.pitch_x;})
-      .attr("y", (d) => {return d.pitch_y + node_r/6;})
-      .attr("font-size", node_r*0.5)
-      .text((d) => {return d.jersey_number})
-      .classed("jersey_numbers", true);
-}
 
 //INTERACTION helpers ============================================================================
 
@@ -369,16 +328,16 @@ function draw_pitch_highlight(d){
   pitch_team1.selectAll(".compcircle_small").remove();
   pitch_team2.selectAll(".compcircle_small").remove();
 
-  if (comp_player_1 !== undefined){
+  if (compBox.comp_player_1 !== undefined){
     pitch_team1.insert("circle",":first-child")
-      .attr("cx", () => {return comp_player_1.pitch_x;})
-      .attr("cy", () => {return comp_player_1.pitch_y;})
+      .attr("cx", () => {return compBox.comp_player_1.pitch_x;})
+      .attr("cy", () => {return compBox.comp_player_1.pitch_y;})
       .classed("compcircle_small", true);
   }
-  if (comp_player_2 !== undefined){
+  if (compBox.comp_player_2 !== undefined){
     pitch_team2.insert("circle",":first-child")
-      .attr("cx", () => {return comp_player_2.pitch_x;})
-      .attr("cy", () => {return comp_player_2.pitch_y;})
+      .attr("cx", () => {return compBox.comp_player_2.pitch_x;})
+      .attr("cy", () => {return compBox.comp_player_2.pitch_y;})
       .classed("compcircle_small", true);
   }
 }
@@ -409,97 +368,6 @@ function update_link_colours(d){
     })
 }
 
-//hover function for circles
-//highlight lines connected to that player on mouseover
-function mouseovered(d) {
-
-  //update player info card
-  var card;
-  var img_name;
-  if (d.team_id === players[0][0].team_id) {
-    card = card1;
-    img_name = 'images/team1.png';
-  }
-  else {
-    card = card2;
-    img_name = 'images/team2.png';
-  }
-
-  //select existing rectangle that has been drawn in render
-  card.select("rect")
-    .style("fill","#444")
-    .style("stroke", "#fff")
-
-  //add labels
-  card.selectAll(".card_text").remove();
-  card.append("text")
-        .attr("x", card_width * 0.4)
-        .attr("y", card_width * 0.06)
-        .text("Name: ")
-        .classed("card_text", true);
-  card.append("text")
-        .attr("x", card_width * 0.4)
-        .attr("y", card_width * 0.18)
-        .text("Country: ")
-        .classed("card_text", true);
-  card.append("text")
-        .attr("x", card_width * 0.4)
-        .attr("y", card_width * 0.30)
-        .text("Position: ")
-        .classed("card_text", true);
-
-  card.append("text")
-        .attr("x", card_width * 0.4)
-        .attr("y", card_width * 0.12)
-        .text(d.name)
-        .classed("card_field", true)
-        .classed("card_text", true);
-  card.append("text")
-        .attr("x", card_width * 0.4)
-        .attr("y", card_width * 0.24)
-        .text(d.country.name)
-        .classed("card_field", true)
-        .classed("card_text", true);
-  card.append("text")
-        .attr("x", card_width * 0.4)
-        .attr("y", card_width * 0.36)
-        .text(d.position)
-        .classed("card_field", true)
-        .classed("card_text", true);
-
-  card.selectAll("image").remove();
-  let card_player_img = card.append("image")
-        .attr('xlink:href', img_name)
-        .attr("x", svg_height * 0.005)
-        .attr("y", svg_height * 0.01)
-        .attr('width', card_width * 0.36)
-        .attr('height', svg_height * 0.15)
-
-}
-
-function mouseout(d){
-  var team;
-  var card;
-  var lines_to_change;
-
-  if (d.team_id === players[0][0].team_id) {
-    lines_to_change = team1_lines;
-    team = 1;
-  }
-  else {
-    lines_to_change = team2_lines;
-    team = 2;
-  }
-
-  if (team === 1) {card = card1;}
-  else {card = card2;}
-
-  card.select("rect")
-      .style("fill","none")
-      .style("stroke", "#474a4f")
-  card.selectAll(".card_text").remove();
-  card.selectAll("image").remove();
-}
 
 //show a label when a highlighted link is hovered over
 function link_hover(d) {
@@ -529,55 +397,6 @@ function link_hover(d) {
 }
 
 //GRAPH SETUP HELPERS =========================================================================
-
-
-//assigns a pitch position to the player based on their position name
-function calc_pitch_positions(players){
-  let sub_count = 0;
-  for (var i = 0; i < players.length; i++) {
-    let p = players[i];
-    if (p.position.includes("Goalkeeper")) {
-      p.pitch_x = pitch_width * 0.05;
-      p.pitch_y = pitch_height * 0.5;
-    }
-    else if (p.position.includes("Back")) {
-      p.pitch_x = pitch_width * 0.15;
-      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
-      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
-      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
-      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
-      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
-    }
-    else if (p.position.includes("Midfield")) {
-      p.pitch_x = pitch_width * 0.27;
-      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.7;}
-      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.3;}
-      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
-      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.9;}
-      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.1;}
-    }
-    else if (p.position.includes("Forward") || p.position.includes("Wing")) {
-      p.pitch_x = pitch_width * 0.4;
-      if (p.position.includes("Right Center")){p.pitch_y = pitch_height * 0.6;}
-      else if (p.position.includes("Left Center")){p.pitch_y = pitch_height * 0.4;}
-      else if (p.position.includes("Center")){p.pitch_y = pitch_height * 0.5;}
-      else if (p.position.includes("Right")){p.pitch_y = pitch_height * 0.73;}
-      else if (p.position.includes("Left")){p.pitch_y = pitch_height * 0.27;}
-    }
-    else if (p.position.includes("Substitute")){
-      p.pitch_y = pitch_height * (sub_count++ * 0.14);
-      p.pitch_x = pitch_width * -0.06;
-    }
-    //switch positions for away team
-    if (p.team_id === teams[1].team_id) {
-      p.pitch_x = pitch_width - p.pitch_x;
-      if(!p.position.includes("Substitute")){
-        p.pitch_y = pitch_height - p.pitch_y;
-      }
-    }
-  }
-
-}
 
 //sort a list of players by their position
 function sort_by_position(playerList){
