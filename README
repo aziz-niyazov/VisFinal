@@ -7,7 +7,7 @@ TO VIEW:
 
 To view this project online, go to: https://soccervis.000webhostapp.com/
 
-To run this project locally, create a local HTTP server:
+To run this project locally, create a local HTTP server from the project directory:
 
 - Windows: python -m http.server 8000
 - Mac/Linux: python -m SimpleHTTPServer 8000

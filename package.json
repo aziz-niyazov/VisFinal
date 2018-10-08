@@ -1,0 +1,26 @@
+{
+  "name": "VisFinal",
+  "version": "1.0.0",
+  "description": "Explanation of Project in ProjectInfo.pdf file.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run webpack",
+    "webpack": "webpack -d --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gary444/VisFinal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gary444/VisFinal/issues"
+  },
+  "homepage": "https://github.com/gary444/VisFinal#readme",
+  "devDependencies": {
+    "webpack": "4.20.2",
+    "webpack-cli": "3.1.2"
+  }
+}
