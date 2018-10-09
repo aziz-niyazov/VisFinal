@@ -1,4 +1,5 @@
 import * as interactions from './interactions.js';
+import {compBox} from '../main_vis.js';
 
 export default class Pitch {
   constructor(svgContainer) {
@@ -24,6 +25,25 @@ export default class Pitch {
 
   }
 
+  draw_pitch_highlight(d){
+    //add highlight circles
+    this.pitch_team1.selectAll(".compcircle_small").remove();
+    this.pitch_team2.selectAll(".compcircle_small").remove();
+
+    if (compBox.comp_player_1 !== undefined){
+      this.pitch_team1.insert("circle",":first-child")
+        .attr("cx", () => {return compBox.comp_player_1.pitch_x;})
+        .attr("cy", () => {return compBox.comp_player_1.pitch_y;})
+        .classed("compcircle_small", true);
+    }
+    if (compBox.comp_player_2 !== undefined){
+      this.pitch_team2.insert("circle",":first-child")
+        .attr("cx", () => {return compBox.comp_player_2.pitch_x;})
+        .attr("cy", () => {return compBox.comp_player_2.pitch_y;})
+        .classed("compcircle_small", true);
+    }
+  }
+
   //draw players on pitch graphic
   add_pitch_players(team_num, team, playerList, node_r){
 
@@ -40,8 +60,6 @@ export default class Pitch {
       let pitch_team_enter = pitch_group.selectAll("circle")
       .data(playerList).enter();
 
-                    console.log("TEST");
-
       pitch_team_enter.append("circle")
         .attr("cx", (d) => {return d.pitch_x;})
         .attr("cy", (d) => {return d.pitch_y;})
@@ -54,7 +72,7 @@ export default class Pitch {
         .style("stroke", team.secondary_colour)
         .on("mouseover", interactions.mouseovered)
         .on("mouseout", interactions.mouseout)
-        // .on("click", on_node_click);
+        .on("click", interactions.on_node_click);
 
 
       pitch_team_enter.append("text")

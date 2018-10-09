@@ -43,22 +43,6 @@ const visual_setup = (svgContainer, team1_center, team2_center, radius, node_r) 
     .attr("cy", team2_center[1] - radius)
   comparison_box_links.selectAll("line").classed("compline", true);
   comparison_box_links.selectAll("circle").classed("compcircle", true);
-
-  // //draw player info card
-  // card1.append("rect")
-  //   .classed("player_card", true)
-  //   .attr("width", card_width)
-  //   .attr("rx", 5)
-  //   .attr("ry", 5)
-  //   .attr("height", 0.17*svg_height);
-  // card2.append("rect")
-  //   .classed("player_card", true)
-  //   .attr("width", card_width)
-  //   .attr("rx", 5)
-  //   .attr("ry", 5)
-  //   .attr("height", 0.17*svg_height);
-
-
 }
 
 const draw_titles = (teams, title_bar_svg, svg_width, svg_height) => {

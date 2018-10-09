@@ -18,8 +18,6 @@ export default class PlayerInfoCard {
 //shows info about a player on the card
   show_player(d, img_name) {
 
-    console.log(img_name);
-
     //select existing rectangle that has been drawn in render
     this.card.select("rect")
       .style("fill","#444")

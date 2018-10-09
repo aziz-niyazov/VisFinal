@@ -15,12 +15,6 @@ export default class CompBox {
     this.comparison_box = svgContainer.append("g")
       .attr("transform", "translate(" + svg_width * 0.35 + "," + svg_height * 0.3 + ")");
 
-    this.comparison_box_bars = this.comparison_box.append("g");
-    this.comparison_box_t1 = this.comparison_box.append("g");
-    this.comparison_box_t2 = this.comparison_box.append("g")
-      .attr("transform", "translate(" + cb_width / 2 + ",0)");
-
-
       //draw comparison box text and lines
     this.comparison_box.append("text").text("Comparison")
       .attr("x",cb_width / 2)
@@ -41,6 +35,11 @@ export default class CompBox {
     .attr("y", cb_height / 2)
     .attr("id", "placeholder")
     .classed("comp_box_title", true);
+
+    this.comparison_box_bars = this.comparison_box.append("g");
+    this.comparison_box_t1 = this.comparison_box.append("g");
+    this.comparison_box_t2 = this.comparison_box.append("g")
+      .attr("transform", "translate(" + cb_width / 2 + ",0)");
 
     this.stat_bar_widths = new Array();
     this.comp_player_1;
