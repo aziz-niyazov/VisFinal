@@ -1,5 +1,6 @@
 import * as d3 from './d3.min.js';
 import * as interactions from './interactions.js';
+import { card1, card2 } from '../main_vis.js';
 
 export default class RadialNodeDiagram {
   constructor(root_group, center) {
@@ -50,6 +51,12 @@ export default class RadialNodeDiagram {
           })
     .duration(duration);
 
+    //to disable 'flashing card' in some browsers
+      setTimeout(() => {
+        card1.unlock();
+        card2.unlock();
+      }, (duration * 0.99));
+
       //delay update of current position so it doesn"t confuse text rotation
       setTimeout(() => {
         this.rotation = rotate_target;
@@ -79,10 +86,17 @@ export default class RadialNodeDiagram {
 
     if (d.highlighted) {
 
-      let rect_width = this.radius;
+      let rect_width = this.radius * 0.8;
+      let rect_height = rect_width * 0.25;
       this.root_group.append("rect")
         .classed("link_label",true)
         .classed("link_label_bg",true)
+        .attr("x", this.center[0] - rect_width/2)
+        .attr("y", this.center[1] - rect_height*0.6)
+        .attr("width", rect_width)
+        .attr("height", rect_height)
+        .attr("rx",5)
+        .attr("ry",5)
 
       this.root_group.append("text")
         .classed("link_label",true)

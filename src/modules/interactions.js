@@ -37,10 +37,12 @@ const on_node_click = (d) => {
   pitch.draw_pitch_highlight(d);
 
   if (d.team_id === teams[0].team_id) {
+    card1.lock();
     diagram1.rotate_transition(d);
     diagram1.update_link_colours(d);
   }
   else {
+    card2.lock();
     diagram2.rotate_transition(d);
     diagram2.update_link_colours(d);
   }
